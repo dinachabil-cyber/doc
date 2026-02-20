@@ -5,9 +5,31 @@
 
 {% block body %}
 	<div class="page-header">
-		<h1>👥 Clients</h1>
-		<div class="page-header-actions">
-			<a href="{{ path('app_client_new') }}" class="btn btn-primary">+ New Client</a>
+		<div>
+			<h1 class="page-title">👥 Clients</h1>
+			<p class="page-subtitle">Manage your clients and their documents</p>
+		</div>
+		<div class="page-actions">
+			<a href="{{ path('app_client_new') }}" class="btn btn-primary">➕ New Client</a>
+		</div>
+	</div>
+
+	{# Stats #}
+	<div class="stats-grid">
+		<div class="stat-card">
+			<div class="stat-icon cyan">👥</div>
+			<div>
+				<div class="stat-value">{{ clients|length }}</div>
+				<div class="stat-label">Total Clients</div>
+			</div>
+		</div>
+	</div>
+
+	{# Search & Filters #}
+	<div class="card" style="padding: 1rem; margin-bottom: 1.5rem;">
+		<div class="search-box" style="max-width: 100%;">
+			<span class="search-box-icon">🔍</span>
+			<input type="search" class="form-control" placeholder="Search clients by name or email..." id="clientSearch" onkeyup="filterClients()">
 		</div>
 	</div>
 
@@ -17,13 +39,13 @@
 				<div class="empty-state-icon">👥</div>
 				<h3>No clients yet</h3>
 				<p>Create your first client to start managing documents.</p>
-				<a href="{{ path('app_client_new') }}" class="btn btn-primary">+ Create Client</a>
+				<a href="{{ path('app_client_new') }}" class="btn btn-primary">➕ Create Client</a>
 			</div>
 		</div>
 	{% else %}
-		<div class="table-wrapper">
-			<div class="table-responsive">
-				<table>
+		<div class="card" style="padding: 0; overflow: hidden;">
+			<div class="table-container">
+				<table id="clientsTable">
 					<thead>
 						<tr>
 							<th>Name</th>
@@ -38,22 +60,21 @@
 						{% for client in clients %}
 							<tr>
 								<td>
-									<a href="{{ path('app_client_show', {id: client.id}) }}" style="font-weight: 600;">
+									<a href="{{ path('app_client_show', {id: client.id}) }}" style="font-weight: 600; color: var(--text-primary);">
 										{{ client.firstName }}
 										{{ client.lastName }}
 									</a>
 								</td>
-								<td>{{ client.email ?? '<span style="color:#94a3b8">—</span>'|raw }}</td>
-								<td>{{ client.phone ?? '<span style="color:#94a3b8">—</span>'|raw }}</td>
+								<td>{{ client.email ?? '<span class="text-muted">—</span>'|raw }}</td>
+								<td>{{ client.phone ?? '<span class="text-muted">—</span>'|raw }}</td>
 								<td>
-									<span class="badge badge-primary">{{ client.documents|length }}</span>
+									<span class="badge badge-cyan">{{ client.documents|length }}</span>
 								</td>
-								<td style="color:#64748b; font-size:0.85rem;">{{ client.createdAt|date('d/m/Y') }}</td>
+								<td class="text-muted">{{ client.createdAt|date('d/m/Y') }}</td>
 								<td>
-									<div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
-										<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-secondary btn-sm">View</a>
-										<a href="{{ path('app_client_edit', {id: client.id}) }}" class="btn btn-secondary btn-sm">Edit</a>
-										<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-primary btn-sm">📄 Docs</a>
+									<div style="display: flex; gap: 0.5rem;">
+										<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-sm btn-secondary">View</a>
+										<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-sm btn-primary">📄</a>
 									</div>
 								</td>
 							</tr>
@@ -63,4 +84,26 @@
 			</div>
 		</div>
 	{% endif %}
+
+	<script>
+		function filterClients() {
+const input = document.getElementById('clientSearch');
+const filter = input.value.toLowerCase();
+const table = document.getElementById('clientsTable');
+const rows = table.getElementsByTagName('tr');
+
+for (let i = 1; i < rows.length; i++) {
+const nameCell = rows[i].getElementsByTagName('td')[0];
+const emailCell = rows[i].getElementsByTagName('td')[1];
+const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
+const emailText = emailCell ? emailCell.textContent.toLowerCase() : '';
+
+if (nameText.includes(filter) || emailText.includes(filter)) {
+rows[i].style.display = '';
+} else {
+rows[i].style.display = 'none';
+}
+}
+}
+	</script>
 {% endblock %}

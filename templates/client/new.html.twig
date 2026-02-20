@@ -5,13 +5,13 @@
 
 {% block body %}
 	<div class="page-header">
-		<h1>➕ New Client</h1>
-		<div class="page-header-actions">
-			<a href="{{ path('app_client_index') }}" class="btn btn-secondary">← Back to list</a>
+		<div>
+			<h1 class="page-title">➕ New Client</h1>
+			<p class="page-subtitle">Add a new client to your system</p>
 		</div>
 	</div>
 
-	<div class="card" style="max-width: 640px;">
+	<div class="card" style="max-width: 600px;">
 		{{ form_start(form) }}
 		<div class="form-group">
 			{{ form_label(form.firstName) }}

@@ -7,70 +7,102 @@
 
 {% block body %}
 	<div class="page-header">
-		<h1>📄
-			{{ document.title }}</h1>
-		<div class="page-header-actions">
+		<div>
+			<h1 class="page-title">📄
+				{{ document.title }}</h1>
+			<p class="page-subtitle">Document details</p>
+		</div>
+		<div class="page-actions">
 			<a href="{{ path('app_document_download', {id: document.id}) }}" class="btn btn-success">⬇ Download</a>
-			<a href="{{ path('app_document_list', {id: document.client.id}) }}" class="btn btn-secondary">← Back to Documents</a>
+			<a href="{{ path('app_document_list', {id: document.client.id}) }}" class="btn btn-secondary">← Back</a>
 		</div>
 	</div>
 
+	{# Preview Section #}
+	{% if document.fileName %}
+		{% set isImage = document.mimeType starts with 'image/' %}
+		{% set isPdf = document.mimeType == 'application/pdf' %}
+
+		<div class="card">
+			<h2 class="card-title mb-2">👁️ Preview</h2>
+			<div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem; text-align: center; min-height: 250px; display: flex; align-items: center; justify-content: center;">
+				{% if isImage %}
+					<img src="{{ vich_uploader_asset(document, 'file') }}" alt="{{ document.title }}" style="max-width: 100%; max-height: 450px; border-radius: 8px;">
+				{% elseif isPdf %}
+					<iframe src="{{ vich_uploader_asset(document, 'file') }}" width="100%" height="500px" style="border: 1px solid var(--border-color); border-radius: 8px;"></iframe>
+				{% else %}
+					<div style="text-align: center;">
+						<div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
+						<p class="text-muted">{{ document.originalName ?? document.fileName }}</p>
+						<p class="text-muted" style="font-size: 0.8rem;">{{ document.mimeType }}
+							—
+							{{ document.size ? (document.size / 1024)|number_format(1) ~ ' KB' : '' }}</p>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+	{% endif %}
+
+	{# Document Details #}
 	<div class="card">
-		<h2 style="margin-bottom: 1rem;">Document Details</h2>
-		<dl class="detail-list">
-			<dt>Title</dt>
-			<dd>{{ document.title }}</dd>
-
-			<dt>Description</dt>
-			<dd>{{ document.description ?? '<span style="color:#94a3b8">No description</span>'|raw }}</dd>
-
-			<dt>Client</dt>
-			<dd>
-				<a href="{{ path('app_client_show', {id: document.client.id}) }}">{{ document.client.firstName }}
-					{{ document.client.lastName }}</a>
-			</dd>
-
-			<dt>Category</dt>
-			<dd>
-				{% if document.category %}
-					<span class="badge badge-success">{{ document.category.name }}</span>
-				{% else %}
-					<span style="color:#94a3b8">Uncategorized</span>
-				{% endif %}
-			</dd>
-
-			<dt>Original Filename</dt>
-			<dd>{{ document.originalName ?? '<span style="color:#94a3b8">—</span>'|raw }}</dd>
-
-			<dt>MIME Type</dt>
-			<dd>
-				{% if document.mimeType %}
-					<span class="badge badge-primary">{{ document.mimeType }}</span>
-				{% else %}
-					<span style="color:#94a3b8">—</span>
-				{% endif %}
-			</dd>
-
-			<dt>Size</dt>
-			<dd>
-				{% if document.size %}
-					{{ (document.size / 1024)|number_format(1) }}
-					KB
-				{% else %}
-					<span style="color:#94a3b8">—</span>
-				{% endif %}
-			</dd>
-
-			<dt>Uploaded by</dt>
-			<dd>{{ document.owner.userIdentifier }}</dd>
-
-			<dt>Uploaded on</dt>
-			<dd>{{ document.createdAt|date('d/m/Y H:i') }}</dd>
-		</dl>
+		<h2 class="card-title mb-2">📋 Details</h2>
+		<div class="detail-list">
+			<div class="detail-item">
+				<div class="detail-label">Title</div>
+				<div class="detail-value">{{ document.title }}</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">Description</div>
+				<div class="detail-value">{{ document.description ? document.description|raw : '<span class="text-muted">No description</span>'|raw }}</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">Client</div>
+				<div class="detail-value">
+					<a href="{{ path('app_client_show', {id: document.client.id}) }}">{{ document.client.firstName }}
+						{{ document.client.lastName }}</a>
+				</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">Category</div>
+				<div class="detail-value">
+					{% if document.category %}
+						<span class="badge badge-green">{{ document.category.name }}</span>
+					{% else %}
+						<span class="text-muted">Uncategorized</span>
+					{% endif %}
+				</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">File</div>
+				<div class="detail-value">{{ document.originalName ?? document.fileName ?? '—' }}</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">Size</div>
+				<div class="detail-value">
+					{% if document.size %}
+						{{ (document.size / 1024)|number_format(1) }}
+						KB
+					{% else %}
+						<span class="text-muted">—</span>
+					{% endif %}
+				</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">Uploaded by</div>
+				<div class="detail-value">{{ document.owner.userIdentifier }}</div>
+			</div>
+			<div class="detail-item">
+				<div class="detail-label">Uploaded on</div>
+				<div class="detail-value">{{ document.createdAt|date('d/m/Y H:i') }}</div>
+			</div>
+		</div>
 	</div>
 
-	<div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
-		<form method="post" action="{{ path('app_document_delete', {id: document.id}) }}" onsubmit="return confirm('Delete this document? This cannot be undone.');">
+	{# Delete #}
+	<div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+		<h3 class="text-red mb-2">⚠️ Delete Document</h3>
+		<p class="text-muted mb-2">This action cannot be undone.</p>
+		<form method="post" action="{{ path('app_document_delete', {id: document.id}) }}" onsubmit="return confirm('Delete this document?');">
 			<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ document.id) }}">
 			<button type="submit" class="btn btn-danger">🗑 Delete Document</button>
 		</form>
