@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+	{{ document.title }}
+	- DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<h1>📄
+			{{ document.title }}</h1>
+		<div class="page-header-actions">
+			<a href="{{ path('app_document_download', {id: document.id}) }}" class="btn btn-success">⬇ Download</a>
+			<a href="{{ path('app_document_list', {id: document.client.id}) }}" class="btn btn-secondary">← Back to Documents</a>
+		</div>
+	</div>
+
+	<div class="card">
+		<h2 style="margin-bottom: 1rem;">Document Details</h2>
+		<dl class="detail-list">
+			<dt>Title</dt>
+			<dd>{{ document.title }}</dd>
+
+			<dt>Description</dt>
+			<dd>{{ document.description ?? '<span style="color:#94a3b8">No description</span>'|raw }}</dd>
+
+			<dt>Client</dt>
+			<dd>
+				<a href="{{ path('app_client_show', {id: document.client.id}) }}">{{ document.client.firstName }}
+					{{ document.client.lastName }}</a>
+			</dd>
+
+			<dt>Category</dt>
+			<dd>
+				{% if document.category %}
+					<span class="badge badge-success">{{ document.category.name }}</span>
+				{% else %}
+					<span style="color:#94a3b8">Uncategorized</span>
+				{% endif %}
+			</dd>
+
+			<dt>Original Filename</dt>
+			<dd>{{ document.originalName ?? '<span style="color:#94a3b8">—</span>'|raw }}</dd>
+
+			<dt>MIME Type</dt>
+			<dd>
+				{% if document.mimeType %}
+					<span class="badge badge-primary">{{ document.mimeType }}</span>
+				{% else %}
+					<span style="color:#94a3b8">—</span>
+				{% endif %}
+			</dd>
+
+			<dt>Size</dt>
+			<dd>
+				{% if document.size %}
+					{{ (document.size / 1024)|number_format(1) }}
+					KB
+				{% else %}
+					<span style="color:#94a3b8">—</span>
+				{% endif %}
+			</dd>
+
+			<dt>Uploaded by</dt>
+			<dd>{{ document.owner.userIdentifier }}</dd>
+
+			<dt>Uploaded on</dt>
+			<dd>{{ document.createdAt|date('d/m/Y H:i') }}</dd>
+		</dl>
+	</div>
+
+	<div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
+		<form method="post" action="{{ path('app_document_delete', {id: document.id}) }}" onsubmit="return confirm('Delete this document? This cannot be undone.');">
+			<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ document.id) }}">
+			<button type="submit" class="btn btn-danger">🗑 Delete Document</button>
+		</form>
+	</div>
+{% endblock %}

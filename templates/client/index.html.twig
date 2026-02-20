@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Clients - DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<h1>👥 Clients</h1>
+		<div class="page-header-actions">
+			<a href="{{ path('app_client_new') }}" class="btn btn-primary">+ New Client</a>
+		</div>
+	</div>
+
+	{% if clients is empty %}
+		<div class="card">
+			<div class="empty-state">
+				<div class="empty-state-icon">👥</div>
+				<h3>No clients yet</h3>
+				<p>Create your first client to start managing documents.</p>
+				<a href="{{ path('app_client_new') }}" class="btn btn-primary">+ Create Client</a>
+			</div>
+		</div>
+	{% else %}
+		<div class="table-wrapper">
+			<div class="table-responsive">
+				<table>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Email</th>
+							<th>Phone</th>
+							<th>Documents</th>
+							<th>Created</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for client in clients %}
+							<tr>
+								<td>
+									<a href="{{ path('app_client_show', {id: client.id}) }}" style="font-weight: 600;">
+										{{ client.firstName }}
+										{{ client.lastName }}
+									</a>
+								</td>
+								<td>{{ client.email ?? '<span style="color:#94a3b8">—</span>'|raw }}</td>
+								<td>{{ client.phone ?? '<span style="color:#94a3b8">—</span>'|raw }}</td>
+								<td>
+									<span class="badge badge-primary">{{ client.documents|length }}</span>
+								</td>
+								<td style="color:#64748b; font-size:0.85rem;">{{ client.createdAt|date('d/m/Y') }}</td>
+								<td>
+									<div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+										<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-secondary btn-sm">View</a>
+										<a href="{{ path('app_client_edit', {id: client.id}) }}" class="btn btn-secondary btn-sm">Edit</a>
+										<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-primary btn-sm">📄 Docs</a>
+									</div>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% endif %}
+{% endblock %}

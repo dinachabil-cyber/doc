@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create Account - DocManager
+{% endblock %}
+
+{% block wrapper %}
+	<div class="auth-wrapper">
+		<div class="auth-card">
+			<div class="auth-card-header">
+				<div class="auth-card-icon">✨</div>
+				<h1>Create your account</h1>
+				<p>Get started with DocManager today</p>
+			</div>
+
+			{{ form_start(registrationForm) }}
+			<div class="form-group">
+				{{ form_label(registrationForm.email, 'Email address') }}
+				{{ form_widget(registrationForm.email, {'attr': {'class': 'form-control', 'placeholder': 'you@example.com'}}) }}
+				{{ form_errors(registrationForm.email) }}
+			</div>
+
+			<div class="form-group">
+				{{ form_label(registrationForm.plainPassword, 'Password') }}
+				{{ form_widget(registrationForm.plainPassword, {'attr': {'class': 'form-control', 'placeholder': '••••••••'}}) }}
+				{{ form_errors(registrationForm.plainPassword) }}
+			</div>
+
+			<div class="form-group">
+				<label class="form-check">
+					{{ form_widget(registrationForm.agreeTerms) }}
+					<span>I agree to the terms and conditions</span>
+				</label>
+				{{ form_errors(registrationForm.agreeTerms) }}
+			</div>
+
+			<button type="submit" class="btn btn-primary btn-lg btn-block">
+				Create Account →
+			</button>
+			{{ form_end(registrationForm) }}
+
+			<div class="auth-footer">
+				Already have an account?
+				<a href="{{ path('app_login') }}">Sign in</a>
+			</div>
+		</div>
+	</div>
+{% endblock %}

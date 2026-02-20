@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Upload Document for
+	{{ client }}
+	- DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<h1>📤 Upload Document</h1>
+		<div class="page-header-actions">
+			<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-secondary">← Back to Documents</a>
+		</div>
+	</div>
+
+	<div class="card" style="max-width: 640px;">
+		<p style="color:#64748b; margin-bottom:1.5rem; font-size:0.9rem;">
+			Uploading for
+			<strong>{{ client.firstName }}
+				{{ client.lastName }}</strong>
+		</p>
+
+		{{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+		<div class="form-group">
+			{{ form_label(form.title) }}
+			{{ form_widget(form.title, {'attr': {'class': 'form-control'}}) }}
+			{{ form_errors(form.title) }}
+		</div>
+		<div class="form-group">
+			{{ form_label(form.description) }}
+			{{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
+			{{ form_errors(form.description) }}
+		</div>
+		<div class="form-group">
+			{{ form_label(form.category) }}
+			{{ form_widget(form.category, {'attr': {'class': 'form-control'}}) }}
+			{{ form_errors(form.category) }}
+		</div>
+		<div class="form-group">
+			{{ form_label(form.file) }}
+			{{ form_widget(form.file, {'attr': {'class': 'form-control'}}) }}
+			{{ form_errors(form.file) }}
+			<p style="color:#94a3b8; font-size:0.8rem; margin-top:0.35rem;">Max 10 MB — PDF, Word, Excel, images, or text files.</p>
+		</div>
+		<div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+			<button type="submit" class="btn btn-primary">Upload Document</button>
+			<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-secondary">Cancel</a>
+		</div>
+		{{ form_end(form) }}
+	</div>
+{% endblock %}
