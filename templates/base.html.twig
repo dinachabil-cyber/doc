@@ -44,15 +44,35 @@
 					<nav class="sidebar-nav">
 						<div class="sidebar-section">
 							<div class="sidebar-section-title">Main</div>
+							<a href="{{ path('app_dashboard') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_dashboard' %}active{% endif %}">
+								<span class="sidebar-link-icon">📊</span>
+								Dashboard
+							</a>
 							<a href="{{ path('app_client_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_client' %}active{% endif %}">
 								<span class="sidebar-link-icon">👥</span>
 								Clients
 							</a>
-							<a href="{{ path('app_document_list', {id: 1}) }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_document' %}active{% endif %}">
+							<a href="{{ path('app_document_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_document' and 'trash' not in app.request.uri %}active{% endif %}">
 								<span class="sidebar-link-icon">📄</span>
 								Documents
 							</a>
 						</div>
+
+						{% if is_granted('ROLE_ADMIN') %}
+							<div class="sidebar-section">
+								<div class="sidebar-section-title">Admin</div>
+								<a href="{{ path('app_category_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_category' %}active{% endif %}">
+									<span class="sidebar-link-icon">🏷️</span>
+									Categories
+								</a>
+								{% if is_granted('ROLE_ADMIN') %}
+									<a href="{{ path('app_document_trash') }}" class="sidebar-link {% if 'trash' in app.request.uri %}active{% endif %}">
+										<span class="sidebar-link-icon">🗑️</span>
+										Trash
+									</a>
+								{% endif %}
+							</div>
+						{% endif %}
 
 						<div class="sidebar-section">
 							<div class="sidebar-section-title">Quick Actions</div>
@@ -69,7 +89,13 @@
 						</div>
 						<div class="sidebar-user-info">
 							<div class="sidebar-user-name">{{ app.user.userIdentifier }}</div>
-							<div class="sidebar-user-email">Account</div>
+							<div class="sidebar-user-email">
+								{% if is_granted('ROLE_ADMIN') %}
+									<span class="badge badge-red">Admin</span>
+								{% else %}
+									<span class="badge badge-gray">User</span>
+								{% endif %}
+							</div>
 						</div>
 						<a href="{{ path('app_logout') }}" class="btn btn-sm btn-secondary" title="Logout">🚪</a>
 					</div>

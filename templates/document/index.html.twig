@@ -1,0 +1,198 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Documents - DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">📄 All Documents</h1>
+			<p class="page-subtitle">Browse and manage all your documents</p>
+		</div>
+		<div class="page-actions">
+			{% if is_granted('ROLE_ADMIN') %}
+				<a href="{{ path('app_document_trash') }}" class="btn btn-warning">🗑️ Trash</a>
+			{% endif %}
+		</div>
+	</div>
+
+	{# Filters Card #}
+	<div class="card mb-4">
+		<div class="card-header">
+			<h2 class="card-title" style="margin: 0; font-size: 1rem;">🔍 Search & Filters</h2>
+		</div>
+		<div class="card-body">
+			<form method="get" class="filters-form">
+				<div class="filters-grid">
+					<div class="filter-group">
+						<label for="search">Search</label>
+						<input type="text" id="search" name="search" value="{{ filters.search|default('') }}" placeholder="Search by title or filename..." class="form-control">
+					</div>
+					<div class="filter-group">
+						<label for="client">Client</label>
+						<select id="client" name="client" class="form-control">
+							<option value="">All Clients</option>
+							{% for client in clients %}
+								<option value="{{ client.id }}" {% if filters.client and filters.client.id == client.id %} selected {% endif %}>
+									{{ client.firstName }}
+									{{ client.lastName }}
+								</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="filter-group">
+						<label for="category">Category</label>
+						<select id="category" name="category" class="form-control">
+							<option value="">All Categories</option>
+							{% for cat in categories %}
+								<option value="{{ cat.id }}" {% if filters.categoryId == cat.id %} selected {% endif %}>
+									{{ cat.name }}
+								</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="filter-group">
+						<label for="fileType">File Type</label>
+						<select id="fileType" name="fileType" class="form-control">
+							<option value="">All Types</option>
+							<option value="pdf" {% if filters.fileType == 'pdf' %} selected {% endif %}>PDF</option>
+							<option value="image" {% if filters.fileType == 'image' %} selected {% endif %}>Images</option>
+						</select>
+					</div>
+					<div class="filter-group">
+						<label for="dateFrom">Date From</label>
+						<input type="date" id="dateFrom" name="dateFrom" value="{{ filters.dateFrom|default('') }}" class="form-control">
+					</div>
+					<div class="filter-group">
+						<label for="dateTo">Date To</label>
+						<input type="date" id="dateTo" name="dateTo" value="{{ filters.dateTo|default('') }}" class="form-control">
+					</div>
+				</div>
+				<div class="filters-actions">
+					<button type="submit" class="btn btn-primary">Apply Filters</button>
+					<a href="{{ path('app_document_index') }}" class="btn btn-secondary">Clear</a>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	{# Results #}
+	{% if documents is empty %}
+		<div class="card">
+			<div class="empty-state">
+				<div class="empty-state-icon">📂</div>
+				<h3>No documents found</h3>
+				<p>Try adjusting your search or filters.</p>
+			</div>
+		</div>
+	{% else %}
+		<div class="card" style="padding: 0; overflow: hidden;">
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Title</th>
+							<th>Client</th>
+							<th>Category</th>
+							<th>Type</th>
+							<th>Size</th>
+							<th>Uploaded</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for doc in documents %}
+							<tr>
+								<td>
+									<a href="{{ path('app_document_show', {id: doc.id}) }}" style="font-weight: 600;">{{ doc.title }}</a>
+									{% if doc.description %}
+										<div class="text-muted" style="font-size: 0.75rem;">{{ doc.description|u.truncate(50, '...') }}</div>
+									{% endif %}
+								</td>
+								<td>
+									{% if doc.client %}
+										<a href="{{ path('app_client_show', {id: doc.client.id}) }}">
+											{{ doc.client.firstName }}
+											{{ doc.client.lastName }}
+										</a>
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+								<td>
+									{% if doc.category %}
+										<span class="badge badge-purple">{{ doc.category.name }}</span>
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+								<td>
+									<span class="badge {% if doc.isPdf() %}badge-red{% elseif doc.isImage() %}badge-blue{% else %}badge-gray{% endif %}">
+										{% if doc.isPdf() %}
+											PDF
+										{% elseif doc.isImage() %}
+											Image
+										{% else %}
+											{{ doc.mimeType ? doc.mimeType|split('/')|last : 'File' }}
+										{% endif %}
+									</span>
+								</td>
+								<td>
+									{% if doc.size %}
+										{{ (doc.size / 1024)|number_format(1) }}
+										KB
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+								<td class="text-muted">{{ doc.createdAt|date('d/m/Y H:i') }}</td>
+								<td>
+									<div
+										style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+										{# Preview button #}
+										{% if doc.isPdf() or doc.isImage() %}
+											<a href="{{ path('app_document_preview', {id: doc.id}) }}" target="_blank" class="btn btn-sm btn-info" title="Preview">👁️</a>
+										{% endif %}
+										{# Download button #}
+										<a href="{{ path('app_document_download', {id: doc.id}) }}" class="btn btn-sm btn-success" title="Download">⬇</a>
+										{# Edit button #}
+										<a href="{{ path('app_document_edit', {id: doc.id}) }}" class="btn btn-sm btn-secondary" title="Edit">✏️</a>
+										{# Delete button (soft delete) #}
+										<form method="post" action="{{ path('app_document_delete', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('Move to trash?');">
+											<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ doc.id) }}">
+											<button type="submit" class="btn btn-sm btn-danger" title="Move to trash">🗑️</button>
+										</form>
+									</div>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		{# Pagination #}
+		{% if pagination.totalPages > 1 %}
+			<div class="pagination-wrapper">
+				<nav class="pagination">
+					{% if pagination.page > 1 %}
+						<a href="{{ path('app_document_index', app.request.query|merge({page: pagination.page - 1})) }}" class="btn btn-sm btn-secondary">← Previous</a>
+					{% endif %}
+
+					<span class="pagination-info">
+						Page
+						{{ pagination.page }}
+						of
+						{{ pagination.totalPages }}
+						({{ pagination.total }}
+						documents)
+					</span>
+
+					{% if pagination.page < pagination.totalPages %}
+						<a href="{{ path('app_document_index', app.request.query|merge({page: pagination.page + 1})) }}" class="btn btn-sm btn-secondary">Next →</a>
+					{% endif %}
+				</nav>
+			</div>
+		{% endif %}
+	{% endif %}
+{% endblock %}

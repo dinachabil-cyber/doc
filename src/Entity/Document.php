@@ -42,6 +42,10 @@ class Document
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    // Soft delete field - when deleted, this stores the deletion timestamp
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $deletedAt = null;
+
     #[ORM\ManyToOne(inversedBy: 'documents')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Client $client = null;
@@ -156,6 +160,43 @@ class Document
         return $this;
     }
 
+    /**
+     * Check if document is deleted (soft delete)
+     */
+    public function isDeleted(): bool
+    {
+        return $this->deletedAt !== null;
+    }
+
+    public function getDeletedAt(): ?\DateTimeInterface
+    {
+        return $this->deletedAt;
+    }
+
+    public function setDeletedAt(?\DateTimeInterface $deletedAt): static
+    {
+        $this->deletedAt = $deletedAt;
+        return $this;
+    }
+
+    /**
+     * Soft delete the document
+     */
+    public function softDelete(): static
+    {
+        $this->deletedAt = new \DateTime();
+        return $this;
+    }
+
+    /**
+     * Restore the document from trash
+     */
+    public function restore(): static
+    {
+        $this->deletedAt = null;
+        return $this;
+    }
+
     public function getClient(): ?Client
     {
         return $this->client;
@@ -204,5 +245,35 @@ class Document
         }
 
         return $this;
+    }
+
+    /**
+     * Check if file is a PDF
+     */
+    public function isPdf(): bool
+    {
+        return $this->mimeType === 'application/pdf';
+    }
+
+    /**
+     * Check if file is an image
+     */
+    public function isImage(): bool
+    {
+        return $this->mimeType && str_starts_with($this->mimeType, 'image/');
+    }
+
+    /**
+     * Get file extension
+     */
+    public function getFileExtension(): string
+    {
+        if ($this->originalName) {
+            return pathinfo($this->originalName, PATHINFO_EXTENSION);
+        }
+        if ($this->fileName) {
+            return pathinfo($this->fileName, PATHINFO_EXTENSION);
+        }
+        return '';
     }
 }

@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">📊 Dashboard</h1>
+			<p class="page-subtitle">Welcome back,
+				{{ app.user.userIdentifier }}!</p>
+		</div>
+	</div>
+
+	{# Stats Cards #}
+	<div class="stats-grid">
+		<div class="stat-card">
+			<div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+				👥
+			</div>
+			<div class="stat-content">
+				<div class="stat-value">{{ totalClients }}</div>
+				<div class="stat-label">Total Clients</div>
+			</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+				📄
+			</div>
+			<div class="stat-content">
+				<div class="stat-value">{{ totalDocuments }}</div>
+				<div class="stat-label">Total Documents</div>
+			</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+				📤
+			</div>
+			<div class="stat-content">
+				<div class="stat-value">{{ recentUploads|length }}</div>
+				<div class="stat-label">Recent Uploads</div>
+			</div>
+		</div>
+		{% if is_granted('ROLE_ADMIN') %}
+			<div class="stat-card">
+				<div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+					🗑️
+				</div>
+				<div class="stat-content">
+					<div class="stat-value">{{ recentlyDeleted|length }}</div>
+					<div class="stat-label">In Trash</div>
+				</div>
+			</div>
+		{% endif %}
+	</div>
+
+	<div
+		class="dashboard-grid">
+		{# Recent Uploads #}
+		<div class="card">
+			<div class="card-header">
+				<h2 class="card-title">📤 Recent Uploads</h2>
+				<a href="{{ path('app_document_index') }}" class="btn btn-sm btn-secondary">View All</a>
+			</div>
+			<div class="card-body">
+				{% if recentUploads is empty %}
+					<p class="text-muted">No recent uploads</p>
+				{% else %}
+					<div class="activity-list">
+						{% for doc in recentUploads %}
+							<div class="activity-item">
+								<div class="activity-icon">
+									{% if doc.isPdf() %}
+										📕
+									{% elseif doc.isImage() %}
+										🖼️
+									{% else %}
+										📄
+									{% endif %}
+								</div>
+								<div class="activity-content">
+									<div class="activity-title">{{ doc.title }}</div>
+									<div class="activity-meta">
+										{% if doc.client %}
+											{{ doc.client.firstName }}
+											{{ doc.client.lastName }}
+											•
+										{% endif %}
+										{{ doc.createdAt|date('d/m/Y H:i') }}
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+				{% endif %}
+			</div>
+		</div>
+
+		{# Recent Activity #}
+		<div class="card">
+			<div class="card-header">
+				<h2 class="card-title">📋 Recent Activity</h2>
+			</div>
+			<div class="card-body">
+				{% if recentActivity is empty %}
+					<p class="text-muted">No recent activity</p>
+				{% else %}
+					<div class="activity-list">
+						{% for activity in recentActivity %}
+							<div class="activity-item">
+								<div class="activity-icon">
+									{% if activity.action == 'upload' %}
+										📤
+									{% elseif activity.action == 'delete' %}
+										🗑️
+									{% elseif activity.action == 'download' %}
+										📥
+									{% elseif activity.action == 'edit' %}
+										✏️
+									{% elseif activity.action == 'restore' %}
+										♻️
+									{% elseif activity.action == 'permanent_delete' %}
+										❌
+									{% elseif activity.action == 'client_create' %}
+										👤
+									{% elseif activity.action == 'client_edit' %}
+										👤
+									{% elseif activity.action == 'client_delete' %}
+										👤
+									{% else %}
+										📋
+									{% endif %}
+								</div>
+								<div class="activity-content">
+									<div class="activity-title">{{ activity.actionLabel }}</div>
+									<div class="activity-meta">
+										{{ activity.user.email }}
+										•
+										{{ activity.createdAt|date('d/m/Y H:i') }}
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+				{% endif %}
+			</div>
+		</div>
+
+		{% if is_granted('ROLE_ADMIN') and recentlyDeleted is not empty %}
+			{# Recently Deleted #}
+			<div class="card">
+				<div class="card-header">
+					<h2 class="card-title">🗑️ Recently Deleted</h2>
+					<a href="{{ path('app_document_trash') }}" class="btn btn-sm btn-secondary">View Trash</a>
+				</div>
+				<div class="card-body">
+					<div class="activity-list">
+						{% for doc in recentlyDeleted %}
+							<div class="activity-item">
+								<div class="activity-icon" style="opacity: 0.6;">
+									{% if doc.isPdf() %}
+										📕
+									{% elseif doc.isImage() %}
+										🖼️
+									{% else %}
+										📄
+									{% endif %}
+								</div>
+								<div class="activity-content">
+									<div class="activity-title" style="text-decoration: line-through; opacity: 0.7;">
+										{{ doc.title }}
+									</div>
+									<div class="activity-meta">
+										Deleted
+										{{ doc.deletedAt|date('d/m/Y H:i') }}
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

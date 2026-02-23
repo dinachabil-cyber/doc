@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Document - DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">✏️ Edit Document</h1>
+			<p class="page-subtitle">Update document information</p>
+		</div>
+		<div class="page-actions">
+			<a href="{{ path('app_document_show', {id: document.id}) }}" class="btn btn-secondary">← Back</a>
+		</div>
+	</div>
+
+	<div class="card">
+		<div class="card-body">
+			{{ form_start(form, {attr: {class: 'form-horizontal'}}) }}
+
+			<div class="form-group">
+				{{ form_label(form.title) }}
+				{{ form_widget(form.title, {attr: {class: 'form-control'}}) }}
+				{{ form_errors(form.title) }}
+			</div>
+
+			<div class="form-group">
+				{{ form_label(form.description) }}
+				{{ form_widget(form.description, {attr: {class: 'form-control', rows: 4}}) }}
+				{{ form_errors(form.description) }}
+			</div>
+
+			<div class="form-group">
+				{{ form_label(form.category) }}
+				{{ form_widget(form.category, {attr: {class: 'form-control'}}) }}
+				{{ form_errors(form.category) }}
+			</div>
+
+			{# Hide the file field in edit mode - users can't change the file #}
+			<div style="display: none;">
+				{{ form_rest(form) }}
+			</div>
+
+			<div class="form-actions">
+				<button type="submit" class="btn btn-primary">💾 Save Changes</button>
+				<a href="{{ path('app_document_show', {id: document.id}) }}" class="btn btn-secondary">Cancel</a>
+			</div>
+
+			{{ form_end(form) }}
+		</div>
+	</div>
+
+	{# File Info #}
+	<div class="card mt-4">
+		<div class="card-header">
+			<h2 class="card-title">📎 File Information</h2>
+		</div>
+		<div class="card-body">
+			<table class="info-table">
+				<tr>
+					<th>Original Filename</th>
+					<td>{{ document.originalName ?? '—' }}</td>
+				</tr>
+				<tr>
+					<th>File Type</th>
+					<td>{{ document.mimeType ?? '—' }}</td>
+				</tr>
+				<tr>
+					<th>File Size</th>
+					<td>
+						{% if document.size %}
+							{{ (document.size / 1024)|number_format(1) }}
+							KB{% else %}—
+						{% endif %}
+					</td>
+				</tr>
+				<tr>
+					<th>Uploaded</th>
+					<td>{{ document.createdAt|date('d/m/Y H:i') }}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+{% endblock %}

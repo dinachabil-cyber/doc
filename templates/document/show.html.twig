@@ -13,8 +13,12 @@
 			<p class="page-subtitle">Document details</p>
 		</div>
 		<div class="page-actions">
+			{% if document.isPdf() or document.isImage() %}
+				<a href="{{ path('app_document_preview', {id: document.id}) }}" target="_blank" class="btn btn-info">👁️ Preview</a>
+			{% endif %}
 			<a href="{{ path('app_document_download', {id: document.id}) }}" class="btn btn-success">⬇ Download</a>
-			<a href="{{ path('app_document_list', {id: document.client.id}) }}" class="btn btn-secondary">← Back</a>
+			<a href="{{ path('app_document_edit', {id: document.id}) }}" class="btn btn-secondary">✏️ Edit</a>
+			<a href="{{ path('app_document_index') }}" class="btn btn-secondary">← Back</a>
 		</div>
 	</div>
 
@@ -58,8 +62,12 @@
 			<div class="detail-item">
 				<div class="detail-label">Client</div>
 				<div class="detail-value">
-					<a href="{{ path('app_client_show', {id: document.client.id}) }}">{{ document.client.firstName }}
-						{{ document.client.lastName }}</a>
+					{% if document.client %}
+						<a href="{{ path('app_client_show', {id: document.client.id}) }}">{{ document.client.firstName }}
+							{{ document.client.lastName }}</a>
+					{% else %}
+						<span class="text-muted">—</span>
+					{% endif %}
 				</div>
 			</div>
 			<div class="detail-item">
@@ -95,16 +103,20 @@
 				<div class="detail-label">Uploaded on</div>
 				<div class="detail-value">{{ document.createdAt|date('d/m/Y H:i') }}</div>
 			</div>
+			<div class="detail-item">
+				<div class="detail-label">Last updated</div>
+				<div class="detail-value">{{ document.updatedAt ? document.updatedAt|date('d/m/Y H:i') : 'Never' }}</div>
+			</div>
 		</div>
 	</div>
 
-	{# Delete #}
+	{# Delete (Soft Delete) #}
 	<div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
-		<h3 class="text-red mb-2">⚠️ Delete Document</h3>
-		<p class="text-muted mb-2">This action cannot be undone.</p>
-		<form method="post" action="{{ path('app_document_delete', {id: document.id}) }}" onsubmit="return confirm('Delete this document?');">
+		<h3 class="text-red mb-2">🗑️ Move to Trash</h3>
+		<p class="text-muted mb-2">This document will be moved to trash. You can restore it later.</p>
+		<form method="post" action="{{ path('app_document_delete', {id: document.id}) }}" onsubmit="return confirm('Move this document to trash?');">
 			<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ document.id) }}">
-			<button type="submit" class="btn btn-danger">🗑 Delete Document</button>
+			<button type="submit" class="btn btn-danger">🗑️ Move to Trash</button>
 		</form>
 	</div>
 {% endblock %}

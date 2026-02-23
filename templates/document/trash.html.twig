@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Trash - DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">🗑️ Trash</h1>
+			<p class="page-subtitle">Deleted documents (Admin only)</p>
+		</div>
+		<div class="page-actions">
+			<a href="{{ path('app_document_index') }}" class="btn btn-secondary">← Back to Documents</a>
+		</div>
+	</div>
+
+	{% if documents is empty %}
+		<div class="card">
+			<div class="empty-state">
+				<div class="empty-state-icon">✨</div>
+				<h3>Trash is empty</h3>
+				<p>No deleted documents to show.</p>
+			</div>
+		</div>
+	{% else %}
+		<div class="card" style="padding: 0; overflow: hidden;">
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Title</th>
+							<th>Client</th>
+							<th>Deleted</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for doc in documents %}
+							<tr style="opacity: 0.8;">
+								<td>
+									<span style="text-decoration: line-through;">{{ doc.title }}</span>
+									{% if doc.description %}
+										<div class="text-muted" style="font-size: 0.75rem;">{{ doc.description|u.truncate(50, '...') }}</div>
+									{% endif %}
+								</td>
+								<td>
+									{% if doc.client %}
+										{{ doc.client.firstName }}
+										{{ doc.client.lastName }}
+									{% else %}
+										<span class="text-muted">—</span>
+									{% endif %}
+								</td>
+								<td class="text-muted">{{ doc.deletedAt|date('d/m/Y H:i') }}</td>
+								<td>
+									<div
+										style="display: flex; gap: 0.25rem;">
+										{# Restore button #}
+										<form method="post" action="{{ path('app_document_restore', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('Restore this document from trash?');">
+											<input type="hidden" name="_token" value="{{ csrf_token('restore-document-' ~ doc.id) }}">
+											<button type="submit" class="btn btn-sm btn-success" title="Restore">♻️ Restore</button>
+										</form>
+										{# Permanent delete button #}
+										<form method="post" action="{{ path('app_document_permanent_delete', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('PERMANENTLY delete this document? This cannot be undone!');">
+											<input type="hidden" name="_token" value="{{ csrf_token('permanent-delete-document-' ~ doc.id) }}">
+											<button type="submit" class="btn btn-sm btn-danger" title="Permanent Delete">❌ Delete Forever</button>
+										</form>
+									</div>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% endif %}
+{% endblock %}

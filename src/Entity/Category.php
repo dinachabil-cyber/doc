@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\CategoryRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
@@ -18,6 +20,20 @@ class Category
 
     #[ORM\Column(length: 140)]
     private ?string $slug = null;
+
+    /** @var Collection<int, Document> */
+    #[ORM\OneToMany(targetEntity: Document::class, mappedBy: 'category')]
+    private Collection $documents;
+
+    public function __construct()
+    {
+        $this->documents = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?? '';
+    }
 
     public function getId(): ?int
     {
@@ -46,5 +62,11 @@ class Category
         $this->slug = $slug;
 
         return $this;
+    }
+
+    /** @return Collection<int, Document> */
+    public function getDocuments(): Collection
+    {
+        return $this->documents;
     }
 }

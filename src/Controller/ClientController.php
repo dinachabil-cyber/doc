@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Client;
 use App\Form\ClientType;
 use App\Repository\ClientRepository;
+use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +26,7 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/new', name: 'app_client_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
+    public function new(Request $request, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $client = new Client();
         $form = $this->createForm(ClientType::class, $client);
@@ -34,6 +35,8 @@ final class ClientController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $em->persist($client);
             $em->flush();
+
+            $activityLogger->logClientCreate($this->getUser(), $client);
 
             $this->addFlash('success', 'Client created successfully.');
 
@@ -55,13 +58,15 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_client_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Client $client, EntityManagerInterface $em): Response
+    public function edit(Request $request, Client $client, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $form = $this->createForm(ClientType::class, $client);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
+
+            $activityLogger->logClientEdit($this->getUser(), $client);
 
             $this->addFlash('success', 'Client updated successfully.');
 
@@ -75,9 +80,11 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'app_client_delete', methods: ['POST'])]
-    public function delete(Request $request, Client $client, EntityManagerInterface $em): Response
+    public function delete(Request $request, Client $client, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         if ($this->isCsrfTokenValid('delete-client-' . $client->getId(), $request->request->get('_token'))) {
+            $activityLogger->logClientDelete($this->getUser(), $client);
+
             $em->remove($client);
             $em->flush();
 

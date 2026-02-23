@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Categories - DocManager
+{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">🏷️ Categories</h1>
+			<p class="page-subtitle">Manage document categories</p>
+		</div>
+		<div class="page-actions">
+			<a href="{{ path('app_category_new') }}" class="btn btn-primary">➕ New Category</a>
+			<a href="{{ path('app_dashboard') }}" class="btn btn-secondary">← Back</a>
+		</div>
+	</div>
+
+	{% if categories is empty %}
+		<div class="card">
+			<div class="empty-state">
+				<div class="empty-state-icon">🏷️</div>
+				<h3>No categories yet</h3>
+				<p>Create categories to organize your documents.</p>
+				<a href="{{ path('app_category_new') }}" class="btn btn-primary">➕ Create Category</a>
+			</div>
+		</div>
+	{% else %}
+		<div class="card" style="padding: 0; overflow: hidden;">
+			<div class="table-container">
+				<table>
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Slug</th>
+							<th>Documents</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for category in categories %}
+							<tr>
+								<td>
+									<strong>{{ category.name }}</strong>
+								</td>
+								<td>
+									<code>{{ category.slug }}</code>
+								</td>
+								<td>
+									<span class="badge badge-gray">{{ category.documents.count }}</span>
+								</td>
+								<td>
+									<div style="display: flex; gap: 0.25rem;">
+										<a href="{{ path('app_category_edit', {id: category.id}) }}" class="btn btn-sm btn-secondary">✏️ Edit</a>
+										<form method="post" action="{{ path('app_category_delete', {id: category.id}) }}" class="inline-form" onsubmit="return confirm('Delete this category?');">
+											<input type="hidden" name="_token" value="{{ csrf_token('delete-category-' ~ category.id) }}">
+											<button type="submit" class="btn btn-sm btn-danger" {% if category.documents.count > 0 %} disabled title="Cannot delete category with documents" {% endif %}>🗑️</button>
+										</form>
+									</div>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	{% endif %}
+{% endblock %}
