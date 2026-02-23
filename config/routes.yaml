@@ -6,6 +6,10 @@
 
 # To list all registered routes, run the following command:
 #   bin/console debug:router
+app_profile:
+  path: /profile
+  controller: App\Controller\ProfileController::index
 
-controllers:
-    resource: routing.controllers
+admin_users_index:
+  path: /admin/users
+  controller: App\Controller\Admin\UserAdminController::index

@@ -51,7 +51,6 @@ class DocumentRepository extends ServiceEntityRepository
     public function findWithFilters(
         ?string $search = null,
         ?Client $client = null,
-        ?int $categoryId = null,
         ?string $fileType = null,
         ?\DateTimeInterface $dateFrom = null,
         ?\DateTimeInterface $dateTo = null,
@@ -69,11 +68,6 @@ class DocumentRepository extends ServiceEntityRepository
         if ($client) {
             $queryBuilder->andWhere('d.client = :client')
                 ->setParameter('client', $client);
-        }
-
-        if ($categoryId) {
-            $queryBuilder->andWhere('d.category = :category')
-                ->setParameter('category', $categoryId);
         }
 
         if ($fileType) {
@@ -96,9 +90,9 @@ class DocumentRepository extends ServiceEntityRepository
                 ->setParameter('dateTo', $dateTo);
         }
 
-        // Get total count
+        // Get total count using optimized COUNT query
         $countQuery = clone $queryBuilder;
-        $total = count($countQuery->select('d.id')->getQuery()->getResult());
+        $total = (int) $countQuery->select('COUNT(d.id)')->getQuery()->getSingleScalarResult();
 
         // Apply pagination
         $queryBuilder->orderBy('d.createdAt', 'DESC')

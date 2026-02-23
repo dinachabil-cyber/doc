@@ -6,7 +6,6 @@ use App\Entity\Client;
 use App\Entity\Document;
 use App\Form\DocumentType;
 use App\Repository\ClientRepository;
-use App\Repository\CategoryRepository;
 use App\Repository\DocumentRepository;
 use App\Service\ActivityLogger;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,12 +29,10 @@ final class DocumentController extends AbstractController
     public function index(
         Request $request,
         DocumentRepository $documentRepository,
-        ClientRepository $clientRepository,
-        CategoryRepository $categoryRepository
+        ClientRepository $clientRepository
     ): Response {
         $search = $request->query->get('search');
         $clientId = $request->query->get('client');
-        $categoryId = $request->query->get('category');
         $fileType = $request->query->get('fileType');
         $dateFrom = $request->query->get('dateFrom');
         $dateTo = $request->query->get('dateTo');
@@ -48,7 +45,6 @@ final class DocumentController extends AbstractController
         $result = $documentRepository->findWithFilters(
             search: $search,
             client: $client,
-            categoryId: $categoryId,
             fileType: $fileType,
             dateFrom: $dateFromObj,
             dateTo: $dateToObj,
@@ -66,7 +62,6 @@ final class DocumentController extends AbstractController
             'filters' => [
                 'search' => $search,
                 'client' => $client,
-                'categoryId' => $categoryId,
                 'fileType' => $fileType,
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,

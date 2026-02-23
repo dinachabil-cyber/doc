@@ -1,24 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>
-			{% block title %}DocManager
-			{% endblock %}
-		</title>
+		<title>{% block title %}DocManager{% endblock %}</title>
+
 		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>📄</text></svg>">
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-		<link rel="stylesheet" href="{{ asset('css/premium-dashboard.css') }}"> {% block stylesheets %}{% endblock %}
+
+		<link rel="stylesheet" href="{{ asset('css/premium-dashboard.css') }}">
+		{% block stylesheets %}{% endblock %}
+
 		{% block javascripts %}
 			{% block importmap %}
 				{{ importmap('app') }}
 			{% endblock %}
 		{% endblock %}
 	</head>
+
 	<body>
+		{# ✅ Theme Toggle (TOP RIGHT) #}
+		<button class="theme-switch" type="button" aria-label="Toggle theme" title="Light/Dark">
+			<span class="theme-switch__sun" aria-hidden="true">☀️</span>
+			<span class="theme-switch__moon" aria-hidden="true">🌙</span>
+			<span class="theme-switch__knob" aria-hidden="true"></span>
+		</button>
+
 		{# Animated Background #}
 		<div class="bg-animation">
 			<div class="bg-grid"></div>
@@ -29,10 +38,8 @@
 		<div class="glass-overlay"></div>
 
 		{% if app.user %}
-			{# Dashboard Layout with Sidebar #}
-			<div
-				class="app-layout">
-				{# Sidebar #}
+			<div class="app-layout">
+
 				<aside class="sidebar" id="sidebar">
 					<div class="sidebar-header">
 						<div class="sidebar-logo">
@@ -44,72 +51,85 @@
 					<nav class="sidebar-nav">
 						<div class="sidebar-section">
 							<div class="sidebar-section-title">Main</div>
-							<a href="{{ path('app_dashboard') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_dashboard' %}active{% endif %}">
-								<span class="sidebar-link-icon">📊</span>
-								Dashboard
+
+							<a href="{{ path('app_dashboard') }}"
+							   class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_dashboard' %}active{% endif %}">
+								<span class="sidebar-link-icon">📊</span> Dashboard
 							</a>
-							<a href="{{ path('app_client_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_client' %}active{% endif %}">
-								<span class="sidebar-link-icon">👥</span>
-								Clients
+
+							<a href="{{ path('app_client_index') }}"
+							   class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_client' %}active{% endif %}">
+								<span class="sidebar-link-icon">👥</span> Clients
 							</a>
-							<a href="{{ path('app_document_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_document' and 'trash' not in app.request.uri %}active{% endif %}">
-								<span class="sidebar-link-icon">📄</span>
-								Documents
+
+							<a href="{{ path('app_document_index') }}"
+							   class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_document' and 'trash' not in app.request.uri %}active{% endif %}">
+								<span class="sidebar-link-icon">📄</span> Documents
 							</a>
 						</div>
 
 						{% if is_granted('ROLE_ADMIN') %}
 							<div class="sidebar-section">
 								<div class="sidebar-section-title">Admin</div>
-								<a href="{{ path('app_category_index') }}" class="sidebar-link {% if app.request.attributes.get('_route') starts with 'app_category' %}active{% endif %}">
-									<span class="sidebar-link-icon">🏷️</span>
-									Categories
+
+								<a href="{{ path('app_document_trash') }}"
+								   class="sidebar-link {% if 'trash' in app.request.uri %}active{% endif %}">
+									<span class="sidebar-link-icon">🗑️</span> Trash
 								</a>
-								{% if is_granted('ROLE_ADMIN') %}
-									<a href="{{ path('app_document_trash') }}" class="sidebar-link {% if 'trash' in app.request.uri %}active{% endif %}">
-										<span class="sidebar-link-icon">🗑️</span>
-										Trash
-									</a>
-								{% endif %}
+
+								{# ✅ Users (Admin) #}
+								<a href="{{ path('admin_users_index') }}"
+								   class="sidebar-link {% if app.request.attributes.get('_route') starts with 'admin_users' %}active{% endif %}">
+									<span class="sidebar-link-icon">👤</span> Users
+								</a>
 							</div>
 						{% endif %}
 
 						<div class="sidebar-section">
 							<div class="sidebar-section-title">Quick Actions</div>
 							<a href="{{ path('app_client_new') }}" class="sidebar-link">
-								<span class="sidebar-link-icon">➕</span>
-								New Client
+								<span class="sidebar-link-icon">➕</span> New Client
 							</a>
 						</div>
 					</nav>
 
-					<div class="sidebar-user">
-						<div class="sidebar-user-avatar">
-							{{ app.user.userIdentifier|slice(0, 2)|upper }}
-						</div>
-						<div class="sidebar-user-info">
-							<div class="sidebar-user-name">{{ app.user.userIdentifier }}</div>
-							<div class="sidebar-user-email">
-								{% if is_granted('ROLE_ADMIN') %}
-									<span class="badge badge-red">Admin</span>
-								{% else %}
-									<span class="badge badge-gray">User</span>
-								{% endif %}
+					{# ✅ Sidebar user dropdown #}
+					<div class="sidebar-user" id="sbUser">
+						<button class="sidebar-user-btn" type="button" id="sbUserBtn" aria-expanded="false">
+							<div class="sidebar-user-avatar">{{ app.user.userIdentifier|slice(0, 2)|upper }}</div>
+
+							<div class="sidebar-user-info">
+								<div class="sidebar-user-name">{{ app.user.userIdentifier }}</div>
+								<div class="sidebar-user-email">
+									{% if is_granted('ROLE_ADMIN') %}
+										<span class="badge badge-danger">Admin</span>
+									{% else %}
+										<span class="badge badge-primary">User</span>
+									{% endif %}
+								</div>
 							</div>
+
+							<span class="sidebar-user-caret" aria-hidden="true">▾</span>
+						</button>
+
+						<div class="sidebar-user-menu" id="sbUserMenu">
+							<a class="sidebar-user-item" href="{{ path('app_profile') }}">👤 Profile</a>
+
+							{% if is_granted('ROLE_ADMIN') %}
+								<a class="sidebar-user-item" href="{{ path('admin_users_index') }}">🛠 Users</a>
+							{% endif %}
+
+							<div class="sidebar-user-sep"></div>
+							<a class="sidebar-user-item sidebar-user-item-danger" href="{{ path('app_logout') }}">🚪 Logout</a>
 						</div>
-						<a href="{{ path('app_logout') }}" class="btn btn-sm btn-secondary" title="Logout">🚪</a>
 					</div>
 				</aside>
 
-				{# Main Content #}
 				<main class="main-content">
-					<div
-						class="page-content">
-						{# Flash Messages #}
+					<div class="page-content">
 						{% for label, messages in app.flashes %}
 							{% for message in messages %}
-								<div class="flash flash-{{ label }}">✓
-									{{ message }}</div>
+								<div class="flash flash-{{ label }}">✓ {{ message }}</div>
 							{% endfor %}
 						{% endfor %}
 
@@ -118,17 +138,14 @@
 				</main>
 			</div>
 
-			{# Mobile Toggle Button #}
 			<button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
 
 		{% else %}
-			{# Auth Layout (Login/Register) #}
 			{% block wrapper %}
 				<div class="auth-wrapper">
 					{% for label, messages in app.flashes %}
 						{% for message in messages %}
-							<div class="flash flash-{{ label }}">✓
-								{{ message }}</div>
+							<div class="flash flash-{{ label }}">✓ {{ message }}</div>
 						{% endfor %}
 					{% endfor %}
 
@@ -136,5 +153,56 @@
 				</div>
 			{% endblock %}
 		{% endif %}
+
+		{# ✅ Theme JS #}
+		<script>
+			(function () {
+				const root = document.documentElement;
+				const key = "docmanager_theme";
+				const saved = localStorage.getItem(key);
+
+				root.setAttribute("data-theme", saved || "dark");
+
+				const btn = document.querySelector(".theme-switch");
+				if (!btn) return;
+
+				btn.addEventListener("click", function () {
+					const cur = root.getAttribute("data-theme") || "dark";
+					const next = cur === "dark" ? "light" : "dark";
+					root.setAttribute("data-theme", next);
+					localStorage.setItem(key, next);
+				});
+			})();
+		</script>
+
+		{# ✅ Sidebar user dropdown JS #}
+		<script>
+			(() => {
+				const wrap = document.getElementById("sbUser");
+				if (!wrap) return;
+
+				const btn = document.getElementById("sbUserBtn");
+
+				const close = () => {
+					wrap.classList.remove("is-open");
+					btn?.setAttribute("aria-expanded", "false");
+				};
+
+				btn?.addEventListener("click", (e) => {
+					e.preventDefault();
+					const open = wrap.classList.toggle("is-open");
+					btn.setAttribute("aria-expanded", open ? "true" : "false");
+				});
+
+				document.addEventListener("click", (e) => {
+					if (!wrap.contains(e.target)) close();
+				});
+
+				document.addEventListener("keydown", (e) => {
+					if (e.key === "Escape") close();
+				});
+			})();
+		</script>
+
 	</body>
 </html>

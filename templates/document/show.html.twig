@@ -70,16 +70,7 @@
 					{% endif %}
 				</div>
 			</div>
-			<div class="detail-item">
-				<div class="detail-label">Category</div>
-				<div class="detail-value">
-					{% if document.category %}
-						<span class="badge badge-green">{{ document.category.name }}</span>
-					{% else %}
-						<span class="text-muted">Uncategorized</span>
-					{% endif %}
-				</div>
-			</div>
+
 			<div class="detail-item">
 				<div class="detail-label">File</div>
 				<div class="detail-value">{{ document.originalName ?? document.fileName ?? '—' }}</div>

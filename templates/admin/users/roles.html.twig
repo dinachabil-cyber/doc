@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit User Roles - DocManager{% endblock %}
+
+{% block body %}
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">🛠️ Edit User Roles</h1>
+			<p class="page-subtitle">Manage roles for {{ u.email }}</p>
+		</div>
+		<div class="page-actions">
+			<a href="{{ path('admin_users_index') }}" class="btn btn-secondary">← Back</a>
+		</div>
+	</div>
+
+	<div class="card" style="max-width: 500px;">
+		<div class="card-body">
+			{{ form_start(form) }}
+			
+			<div class="form-group">
+				{{ form_label(form.roles) }}
+				<div class="roles-options">
+					{% for child in form.roles %}
+						<div class="form-check">
+							{{ form_widget(child, { 'attr': { 'class': 'form-check-input' } }) }}
+							{{ form_label(child, null, { 'label_attr': { 'class': 'form-check-label' } }) }}
+						</div>
+					{% endfor %}
+				</div>
+				{{ form_errors(form.roles) }}
+			</div>
+
+			<div class="form-actions">
+				<button type="submit" class="btn btn-primary">💾 Save Changes</button>
+				<a href="{{ path('admin_users_index') }}" class="btn btn-secondary">Cancel</a>
+			</div>
+
+			{{ form_end(form) }}
+		</div>
+	</div>
+
+	<div class="card" style="max-width: 500px; margin-top: 1rem;">
+		<div class="card-header">
+			<h2 class="card-title" style="margin: 0; font-size: 1rem;">👤 User Info</h2>
+		</div>
+		<div class="card-body">
+			<table class="info-table">
+				<tr>
+					<th>Email</th>
+					<td>{{ u.email }}</td>
+				</tr>
+				<tr>
+					<th>Current Roles</th>
+					<td>
+						{% for role in u.roles %}
+							<span class="badge badge-{{ role == 'ROLE_ADMIN' ? 'red' : 'blue' }}">{{ role }}</span>
+						{% endfor %}
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+	<style>
+		.roles-options {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+			margin-top: 0.5rem;
+		}
+		.form-check {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+		.form-check-input {
+			width: 1.25rem;
+			height: 1.25rem;
+		}
+		.form-check-label {
+			font-size: 1rem;
+		}
+	</style>
+{% endblock %}

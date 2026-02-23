@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin - Users{% endblock %}
+
+{% block body %}
+  <h1>Users</h1>
+
+  {% for m in app.flashes('success') %}
+    <div class="alert alert-success">{{ m }}</div>
+  {% endfor %}
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Roles</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.roles|json_encode }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{{ path('admin_users_roles', {id: u.id}) }}">
+            Edit Roles
+          </a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Forgot Password - DocManager{% endblock %}
+
+{% block auth_body %}
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="auth-icon">🔐</div>
+        <h1 class="auth-title">Forgot Password?</h1>
+        <p class="auth-subtitle">Enter your email and we'll send you a reset link</p>
+    </div>
+
+    {% if successMessage %}
+        <div class="flash flash-success">
+            <span class="flash-icon">✓</span>
+            {{ successMessage }}
+        </div>
+        <div class="auth-footer">
+            <a href="{{ path('app_login') }}">Back to Sign In</a>
+        </div>
+    {% else %}
+        <form method="post">
+            <div class="form-group">
+                <label class="form-label" for="inputEmail">Email address</label>
+                <input type="email" 
+                       name="email" 
+                       id="inputEmail" 
+                       class="form-control {% if errors.email is defined %}is-invalid{% endif %}" 
+                       value="{{ email }}"
+                       autocomplete="email" 
+                       required 
+                       autofocus 
+                       placeholder="you@example.com">
+                {% if errors.email is defined %}
+                    <div class="form-error">{{ errors.email }}</div>
+                {% endif %}
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block" type="submit">
+                <span class="btn-icon">📧</span>
+                Send Reset Link
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Remember your password? <a href="{{ path('app_login') }}">Sign In</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

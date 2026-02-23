@@ -1,7 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Documents - DocManager
-{% endblock %}
+{% block title %}Documents - DocManager{% endblock %}
 
 {% block body %}
 	<div class="page-header">
@@ -36,17 +35,6 @@
 								<option value="{{ client.id }}" {% if filters.client and filters.client.id == client.id %} selected {% endif %}>
 									{{ client.firstName }}
 									{{ client.lastName }}
-								</option>
-							{% endfor %}
-						</select>
-					</div>
-					<div class="filter-group">
-						<label for="category">Category</label>
-						<select id="category" name="category" class="form-control">
-							<option value="">All Categories</option>
-							{% for cat in categories %}
-								<option value="{{ cat.id }}" {% if filters.categoryId == cat.id %} selected {% endif %}>
-									{{ cat.name }}
 								</option>
 							{% endfor %}
 						</select>
@@ -93,7 +81,6 @@
 						<tr>
 							<th>Title</th>
 							<th>Client</th>
-							<th>Category</th>
 							<th>Type</th>
 							<th>Size</th>
 							<th>Uploaded</th>
@@ -120,13 +107,6 @@
 									{% endif %}
 								</td>
 								<td>
-									{% if doc.category %}
-										<span class="badge badge-purple">{{ doc.category.name }}</span>
-									{% else %}
-										<span class="text-muted">—</span>
-									{% endif %}
-								</td>
-								<td>
 									<span class="badge {% if doc.isPdf() %}badge-red{% elseif doc.isImage() %}badge-blue{% else %}badge-gray{% endif %}">
 										{% if doc.isPdf() %}
 											PDF
@@ -147,8 +127,7 @@
 								</td>
 								<td class="text-muted">{{ doc.createdAt|date('d/m/Y H:i') }}</td>
 								<td>
-									<div
-										style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+									<div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
 										{# Preview button #}
 										{% if doc.isPdf() or doc.isImage() %}
 											<a href="{{ path('app_document_preview', {id: doc.id}) }}" target="_blank" class="btn btn-sm btn-info" title="Preview">👁️</a>

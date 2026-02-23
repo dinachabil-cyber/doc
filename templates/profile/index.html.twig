@@ -1,0 +1,631 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Profile - DocManager{% endblock %}
+
+{% block body %}
+<div class="profile-container">
+  {# Header Section #}
+  <div class="profile-header">
+    <div class="profile-avatar-large">
+      {{ user.email|slice(0, 2)|upper }}
+    </div>
+    <div class="profile-header-info">
+      <h1 class="profile-title">My Profile</h1>
+      <p class="profile-subtitle">Manage your account settings and preferences</p>
+    </div>
+  </div>
+
+  {# Flash Messages #}
+  {% for message in app.flashes('success') %}
+    <div class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      {{ message }}
+    </div>
+  {% endfor %}
+  
+  {% for message in app.flashes('error') %}
+    <div class="alert alert-error">
+      <span class="alert-icon">⚠️</span>
+      {{ message }}
+    </div>
+  {% endfor %}
+
+  {# Profile Card - View or Edit Mode #}
+  <div class="profile-card">
+    <div class="profile-card-header">
+      <h2 class="profile-card-title">
+        <span class="icon">👤</span>
+        Account Information
+      </h2>
+      {% if not isEditMode %}
+        <a href="{{ path('app_profile_edit') }}" class="btn btn-outline">
+          <span class="btn-icon">✏️</span>
+          Edit Profile
+        </a>
+      {% endif %}
+    </div>
+
+    {% if isEditMode %}
+      {# Edit Mode Form #}
+      <form method="post" action="{{ path('app_profile_edit') }}" class="profile-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="inputEmail">Email Address</label>
+            <input type="email" 
+                   name="email" 
+                   id="inputEmail" 
+                   class="form-control {% if errors.email is defined %}is-invalid{% endif %}"
+                   value="{{ submittedData.email is defined ? submittedData.email : user.email }}"
+                   required
+                   autofocus>
+            {% if errors.email is defined %}
+              <div class="form-error">{{ errors.email }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputUsername">Username</label>
+            <input type="text" 
+                   name="username" 
+                   id="inputUsername" 
+                   class="form-control"
+                   value="{{ submittedData.username is defined ? submittedData.username : user.username }}">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-icon">💾</span>
+            Save Changes
+          </button>
+          <a href="{{ path('app_profile') }}" class="btn btn-secondary">
+            Cancel
+          </a>
+        </div>
+      </form>
+    {% else %}
+      {# Read-Only View #}
+      <div class="profile-view">
+        <div class="profile-field">
+          <div class="profile-field-label">Email Address</div>
+          <div class="profile-field-value">{{ user.email }}</div>
+        </div>
+        
+        <div class="profile-field">
+          <div class="profile-field-label">Username</div>
+          <div class="profile-field-value">{{ user.username ?: 'Not set' }}</div>
+        </div>
+        
+        <div class="profile-field">
+          <div class="profile-field-label">Account Type</div>
+          <div class="profile-field-value">
+            {% for role in user.roles %}
+              {% if role == 'ROLE_ADMIN' %}
+                <span class="badge badge-admin">Admin</span>
+              {% elseif role == 'ROLE_USER' %}
+                <span class="badge badge-user">User</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {# Change Password Card #}
+  <div class="profile-card">
+    <div class="profile-card-header">
+      <h2 class="profile-card-title">
+        <span class="icon">🔒</span>
+        Security
+      </h2>
+      {% if not showPasswordForm %}
+        <a href="{{ path('app_profile_change_password', {show: 'true'}) }}" class="btn btn-outline">
+          <span class="btn-icon">🔑</span>
+          Change Password
+        </a>
+      {% endif %}
+    </div>
+
+    {% if showPasswordForm %}
+      {# Change Password Form #}
+      <form method="post" action="{{ path('app_profile_change_password') }}" class="profile-form">
+        <input type="hidden" name="show" value="true">
+        
+        <div class="form-group">
+          <label class="form-label" for="inputCurrentPassword">Current Password</label>
+          <input type="password" 
+                 name="current_password" 
+                 id="inputCurrentPassword" 
+                 class="form-control {% if passwordErrors.current_password is defined %}is-invalid{% endif %}"
+                 autocomplete="current-password"
+                 required>
+          {% if passwordErrors.current_password is defined %}
+            <div class="form-error">{{ passwordErrors.current_password }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inputNewPassword">New Password</label>
+          <input type="password" 
+                 name="new_password" 
+                 id="inputNewPassword" 
+                 class="form-control {% if passwordErrors.new_password is defined %}is-invalid{% endif %}"
+                 autocomplete="new-password"
+                 required>
+          {% if passwordErrors.new_password is defined %}
+            <div class="form-error">{{ passwordErrors.new_password }}</div>
+          {% else %}
+            <small class="form-hint">Min 8 chars with uppercase, lowercase, and number</small>
+          {% endif %}
+          
+          {# Password Strength Indicator #}
+          <div class="password-strength" id="passwordStrength" {% if not passwordSubmitted %}style="display: none;"{% endif %}>
+            <div class="strength-bar">
+              <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <span class="strength-text" id="strengthText"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inputConfirmPassword">Confirm New Password</label>
+          <input type="password" 
+                 name="confirm_password" 
+                 id="inputConfirmPassword" 
+                 class="form-control {% if passwordErrors.confirm_password is defined %}is-invalid{% endif %}"
+                 autocomplete="new-password"
+                 required>
+          {% if passwordErrors.confirm_password is defined %}
+            <div class="form-error">{{ passwordErrors.confirm_password }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-icon">🔒</span>
+            Update Password
+          </button>
+          <a href="{{ path('app_profile') }}" class="btn btn-secondary">
+            Cancel
+          </a>
+        </div>
+      </form>
+    {% else %}
+      {# Password Info (Read-Only) #}
+      <div class="profile-view">
+        <div class="profile-field">
+          <div class="profile-field-label">Password</div>
+          <div class="profile-field-value">
+            <span class="password-dots">••••••••</span>
+            <small class="text-muted">Last changed: Never</small>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {# Account Stats #}
+  <div class="profile-stats">
+    <div class="stat-card">
+      <div class="stat-icon">📄</div>
+      <div class="stat-value">2</div>
+      <div class="stat-label">Documents</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value">12</div>
+      <div class="stat-label">Activities</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">1</div>
+      <div class="stat-label">Clients</div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const passwordInput = document.getElementById('inputNewPassword');
+  if (passwordInput) {
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+    const strengthBar = document.getElementById('passwordStrength');
+
+    passwordInput.addEventListener('input', function() {
+      const password = this.value;
+      let strength = 0;
+
+      if (password.length >= 8) strength += 25;
+      if (password.length >= 12) strength += 15;
+      if (/[A-Z]/.test(password)) strength += 20;
+      if (/[a-z]/.test(password)) strength += 20;
+      if (/[0-9]/.test(password)) strength += 10;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 10;
+
+      strength = Math.min(100, strength);
+
+      strengthFill.style.width = strength + '%';
+
+      if (strength < 30) {
+        strengthFill.className = 'strength-fill weak';
+        strengthText.textContent = 'Weak';
+        strengthText.className = 'strength-text weak';
+      } else if (strength < 60) {
+        strengthFill.className = 'strength-fill fair';
+        strengthText.textContent = 'Fair';
+        strengthText.className = 'strength-text fair';
+      } else if (strength < 80) {
+        strengthFill.className = 'strength-fill good';
+        strengthText.textContent = 'Good';
+        strengthText.className = 'strength-text good';
+      } else {
+        strengthFill.className = 'strength-fill strong';
+        strengthText.textContent = 'Strong';
+        strengthText.className = 'strength-text strong';
+      }
+
+      if (password.length === 0) {
+        strengthBar.style.display = 'none';
+      } else {
+        strengthBar.style.display = 'flex';
+      }
+    });
+
+    // Trigger initial state check
+    if (passwordInput.value.length > 0) {
+      strengthBar.style.display = 'flex';
+      passwordInput.dispatchEvent(new Event('input'));
+    }
+  }
+});
+</script>
+
+<style>
+.profile-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+  border-radius: 16px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  backdrop-filter: blur(10px);
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.profile-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary, #fff);
+}
+
+.profile-subtitle {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.profile-card {
+  background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+  border-radius: 16px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+}
+
+.profile-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary, #fff);
+}
+
+.profile-card-title .icon {
+  font-size: 1.25rem;
+}
+
+.profile-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-field-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.profile-field-value {
+  font-size: 1rem;
+  color: var(--text-primary, #fff);
+}
+
+.profile-field-value .badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.badge-admin {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-user {
+  background: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.password-dots {
+  letter-spacing: 0.2rem;
+}
+
+.text-muted {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 0.85rem;
+  margin-left: 0.5rem;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+}
+
+.form-control {
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15));
+  background: var(--input-bg, rgba(0, 0, 0, 0.2));
+  color: var(--text-primary, #fff);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.form-control.is-invalid {
+  border-color: #ef4444;
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+  margin-top: 0.25rem;
+}
+
+.form-error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-outline {
+  background: transparent;
+  color: #667eea;
+  border: 1px solid #667eea;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.btn-outline:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.alert-success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.alert-icon {
+  font-size: 1.1rem;
+}
+
+/* Password Strength */
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0.75rem;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 3px;
+}
+
+.strength-fill.weak { background-color: #ef4444; }
+.strength-fill.fair { background-color: #f59e0b; }
+.strength-fill.good { background-color: #10b981; }
+.strength-fill.strong { background-color: #667eea; }
+
+.strength-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  min-width: 45px;
+}
+
+.strength-text.weak { color: #ef4444; }
+.strength-text.fair { color: #f59e0b; }
+.strength-text.good { color: #10b981; }
+.strength-text.strong { color: #667eea; }
+</style>
+{% endblock %}

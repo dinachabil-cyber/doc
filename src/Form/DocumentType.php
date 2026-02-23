@@ -2,9 +2,7 @@
 
 namespace App\Form;
 
-use App\Entity\Category;
 use App\Entity\Document;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -26,12 +24,6 @@ class DocumentType extends AbstractType
             'label' => 'Description',
             'required' => false,
             'attr' => ['rows' => 3, 'placeholder' => 'Optional description'],
-        ])
-            ->add('category', EntityType::class , [
-            'class' => Category::class ,
-            'choice_label' => 'name',
-            'required' => false,
-            'placeholder' => '-- Select a category --',
         ])
             ->add('file', FileType::class , [
             'label' => 'File (PDF, image, etc.)',

@@ -3,6 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\ActivityLog;
+use App\Entity\User;
+use App\Entity\Document;
+use App\Entity\Client;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -31,11 +34,11 @@ class ActivityLogRepository extends ServiceEntityRepository
     /**
      * Find activity logs for a specific user
      */
-    public function findByUser(int $userId, int $limit = 20): array
+    public function findByUser(User $user, int $limit = 20): array
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.user = :userId')
-            ->setParameter('userId', $userId)
+            ->andWhere('a.user = :user')
+            ->setParameter('user', $user)
             ->orderBy('a.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
@@ -45,11 +48,11 @@ class ActivityLogRepository extends ServiceEntityRepository
     /**
      * Find activity logs for a specific document
      */
-    public function findByDocument(int $documentId): array
+    public function findByDocument(Document $document): array
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.document = :documentId')
-            ->setParameter('documentId', $documentId)
+            ->andWhere('a.document = :document')
+            ->setParameter('document', $document)
             ->orderBy('a.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
@@ -58,11 +61,11 @@ class ActivityLogRepository extends ServiceEntityRepository
     /**
      * Find activity logs for a specific client
      */
-    public function findByClient(int $clientId): array
+    public function findByClient(Client $client): array
     {
         return $this->createQueryBuilder('a')
-            ->andWhere('a.client = :clientId')
-            ->setParameter('clientId', $clientId)
+            ->andWhere('a.client = :client')
+            ->setParameter('client', $client)
             ->orderBy('a.createdAt', 'DESC')
             ->getQuery()
             ->getResult();

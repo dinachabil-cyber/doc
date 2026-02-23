@@ -54,10 +54,6 @@ class Document
     #[ORM\JoinColumn(nullable: false)]
     private ?User $owner = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?Category $category = null;
-
     // Not mapped in DB. Used by Vich to handle uploads.
     #[Vich\UploadableField(mapping: 'document_file', fileNameProperty: 'fileName')]
     private ?File $file = null;
@@ -184,7 +180,7 @@ class Document
      */
     public function softDelete(): static
     {
-        $this->deletedAt = new \DateTime();
+        $this->deletedAt = new \DateTimeImmutable();
         return $this;
     }
 
@@ -216,17 +212,6 @@ class Document
     public function setOwner(?User $owner): static
     {
         $this->owner = $owner;
-        return $this;
-    }
-
-    public function getCategory(): ?Category
-    {
-        return $this->category;
-    }
-
-    public function setCategory(?Category $category): static
-    {
-        $this->category = $category;
         return $this;
     }
 
