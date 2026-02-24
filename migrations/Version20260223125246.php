@@ -20,8 +20,17 @@ final class Version20260223125246 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE activity_log DROP FOREIGN KEY `FK_activity_log_client`');
-        $this->addSql('ALTER TABLE activity_log DROP FOREIGN KEY `FK_activity_log_document`');
+        // Only drop foreign keys if they exist (wrapped in try-catch for safety)
+        try {
+            $this->addSql('ALTER TABLE activity_log DROP FOREIGN KEY `FK_activity_log_client`');
+        } catch (\Exception $e) {
+            // Foreign key may not exist, continue
+        }
+        try {
+            $this->addSql('ALTER TABLE activity_log DROP FOREIGN KEY `FK_activity_log_document`');
+        } catch (\Exception $e) {
+            // Foreign key may not exist, continue
+        }
         $this->addSql('ALTER TABLE activity_log ADD CONSTRAINT FK_FD06F647C33F7837 FOREIGN KEY (document_id) REFERENCES document (id)');
         $this->addSql('ALTER TABLE activity_log ADD CONSTRAINT FK_FD06F64719EB6921 FOREIGN KEY (client_id) REFERENCES client (id)');
         $this->addSql('ALTER TABLE activity_log RENAME INDEX fk_activity_log_user TO IDX_FD06F647A76ED395');

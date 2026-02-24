@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use App\Enum\Permission;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -30,6 +31,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private array $roles = [];
+
+    /**
+     * @var list<string> The user permissions
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $permissions = [];
 
     /**
      * @var string The hashed password
@@ -96,6 +103,84 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return in_array($role, $this->getRoles(), true);
     }
 
+    /**
+     * Check if user has a specific permission
+     */
+    public function hasPermission(string $permission): bool
+    {
+        // Admin has all permissions - NEVER check explicit permissions for admin
+        if ($this->isAdmin()) {
+            return true;
+        }
+        
+        // Get permissions - ensure it's always an array
+        $permissions = $this->permissions ?? [];
+        
+        return in_array($permission, $permissions, true);
+    }
+
+    /**
+     * Check if user is admin (always bypasses all permission checks)
+     */
+    public function isAdmin(): bool
+    {
+        return in_array('ROLE_ADMIN', $this->getRoles(), true);
+    }
+
+    /**
+     * Get the permission level label for display
+     */
+    public function getPermissionLevel(): string
+    {
+        // Admin users always show Full
+        if ($this->isAdmin()) {
+            return 'Admin';
+        }
+        
+        return \App\Enum\Permission::getPermissionLevel($this->getPermissions());
+    }
+
+    /**
+     * Get all permissions
+     */
+    public function getPermissions(): array
+    {
+        return $this->permissions ?? [];
+    }
+
+    /**
+     * Set permissions
+     * @param list<string> $permissions
+     */
+    public function setPermissions(array $permissions): static
+    {
+        $this->permissions = array_values(array_unique($permissions));
+        return $this;
+    }
+
+    /**
+     * Add a single permission
+     */
+    public function addPermission(string $permission): static
+    {
+        if (!in_array($permission, $this->permissions ?? [], true)) {
+            $this->permissions[] = $permission;
+        }
+        return $this;
+    }
+
+    /**
+     * Remove a single permission
+     */
+    public function removePermission(string $permission): static
+    {
+        if (($key = array_search($permission, $this->permissions ?? [], true)) !== false) {
+            unset($this->permissions[$key]);
+            $this->permissions = array_values($this->permissions);
+        }
+        return $this;
+    }
+
     public function getPassword(): ?string
     {
         return $this->password;
@@ -109,13 +194,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __serialize(): array
     {
-        $data = (array) $this;
-
-        $data["\0" . self::class . "\0password"] = $this->password
-            ? hash('crc32c', $this->password)
-            : null;
-
-        return $data;
+        // Don't include password in serialization to avoid security issues
+        // The password is already properly hashed by Symfony's password hasher
+        return [
+            'id' => $this->id,
+            'email' => $this->email,
+            'username' => $this->username,
+            'roles' => $this->roles,
+            'permissions' => $this->permissions,
+        ];
     }
 
     #[\Deprecated]

@@ -21,6 +21,9 @@ security:
             lazy: true
             provider: app_user_provider
             custom_authenticator: App\Security\LoginFormAuthenticator
+            
+            # Custom access denied handler
+            access_denied_handler: App\Handler\AccessDeniedHandler
 
             logout:
                 path: app_logout

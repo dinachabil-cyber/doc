@@ -177,12 +177,4 @@ class DocumentRepository extends ServiceEntityRepository
 
         return $result ?? 0;
     }
-
-    /**
-     * Find all documents (no filters)
-     */
-    public function findAllDocuments(?int $page = 1, ?int $limit = 20): array
-    {
-        return $this->findWithFilters(page: $page ?? 1, limit: $limit ?? 20);
-    }
 }

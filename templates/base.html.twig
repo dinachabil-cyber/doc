@@ -87,9 +87,11 @@
 
 						<div class="sidebar-section">
 							<div class="sidebar-section-title">Quick Actions</div>
-							<a href="{{ path('app_client_new') }}" class="sidebar-link">
-								<span class="sidebar-link-icon">➕</span> New Client
-							</a>
+							{% if is_granted('CLIENT_CREATE') %}
+								<a href="{{ path('app_client_new') }}" class="sidebar-link">
+									<span class="sidebar-link-icon">➕</span> New Client
+								</a>
+							{% endif %}
 						</div>
 					</nav>
 

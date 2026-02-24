@@ -2,6 +2,10 @@
 
 {% block title %}Reset Password - DocManager{% endblock %}
 
+{% block html_prepend %}
+    <meta name="turbo-visit-control" content="disabled">
+{% endblock %}
+
 {% block auth_body %}
 <div class="auth-card">
     <div class="auth-header">
@@ -10,8 +14,9 @@
         <p class="auth-subtitle">Enter your new password below</p>
     </div>
 
-    <form method="post">
+    <form method="post" action="" data-turbo="false">
         <input type="hidden" name="token" value="{{ token }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('reset_password') }}">
 
         <div class="form-group">
             <label class="form-label" for="inputPassword">New Password</label>

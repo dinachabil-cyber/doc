@@ -2,42 +2,28 @@
 
 namespace App\Form;
 
-use App\Entity\User;
 use App\Enum\Permission;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class AdminUserRolesType extends AbstractType
+class UserPermissionsType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('roles', ChoiceType::class, [
-            'choices' => [
-                'User' => 'ROLE_USER',
-                'Admin' => 'ROLE_ADMIN',
-            ],
-            'expanded' => true,  // checkboxes
-            'multiple' => true,
-            'label' => 'Roles',
-        ]);
-
-        // Add permission groups
         foreach (Permission::getGroups() as $groupName => $permissions) {
             $choices = [];
             foreach ($permissions as $permission => $label) {
                 $choices[$label] = $permission;
             }
 
-            $builder->add('permissions_' . str_replace(' ', '_', $groupName), ChoiceType::class, [
+            $builder->add($groupName, ChoiceType::class, [
                 'choices' => $choices,
-                'expanded' => true,
                 'multiple' => true,
+                'expanded' => true,
                 'label' => $groupName,
                 'required' => false,
-                'mapped' => false, // We'll handle this manually in the controller
             ]);
         }
     }
@@ -45,7 +31,7 @@ class AdminUserRolesType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => User::class,
+            'data_class' => null,
         ]);
     }
 }

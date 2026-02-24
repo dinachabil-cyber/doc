@@ -197,69 +197,6 @@ class PasswordResetService
     }
 
     /**
-     * Get HTML email template
-     */
-    private function getResetEmailHtml(User $user, string $resetUrl): string
-    {
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Password Reset Request</h2>
-        <p>Hello,</p>
-        <p>We received a request to reset your password. Click the button below to create a new password:</p>
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="{$resetUrl}" class="button">Reset Password</a>
-        </p>
-        <p>Or copy and paste this link in your browser:</p>
-        <p style="word-break: break-all; color: #667eea;">{$resetUrl}</p>
-        <p>This link will expire in 30 minutes.</p>
-        <p>If you didn't request this, please ignore this email or contact support if you have concerns.</p>
-        <div class="footer">
-            <p>Best regards,<br>The DocManager Team</p>
-        </div>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    /**
-     * Get plain text email template
-     */
-    private function getResetEmailText(User $user, string $resetUrl): string
-    {
-        return <<<TEXT
-Password Reset Request
-
-Hello,
-
-We received a request to reset your password. Use the link below to create a new password:
-
-{$resetUrl}
-
-This link will expire in 30 minutes.
-
-If you didn't request this, please ignore this email or contact support if you have concerns.
-
-Best regards,
-The DocManager Team
-TEXT;
-    }
-
-    /**
      * Get recent request count for rate limiting
      */
     private function getRecentRequestCount(int $userId): int

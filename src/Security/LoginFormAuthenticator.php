@@ -41,14 +41,16 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         ]
             );
     }
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response    {
+    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
+    {
         // if the user tried to access a protected page before login, redirect there
         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
             return new RedirectResponse($targetPath);
         }
 
-        // redirect to clients list after login
-        return new RedirectResponse($this->urlGenerator->generate('app_client_index'));    }
+        // Redirect to dashboard after login - it requires ROLE_USER which all authenticated users have
+        return new RedirectResponse($this->urlGenerator->generate('app_dashboard'));
+    }
     protected function getLoginUrl(Request $request): string
     {
         return $this->urlGenerator->generate(self::LOGIN_ROUTE);

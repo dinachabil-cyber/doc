@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 class ResetPasswordController extends AbstractController
 {
@@ -21,7 +22,8 @@ class ResetPasswordController extends AbstractController
         Request $request,
         PasswordResetService $passwordResetService,
         UserPasswordHasherInterface $passwordHasher,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        CsrfTokenManagerInterface $csrfTokenManager
     ): Response {
         // Redirect logged-in users to profile
         if ($this->getUser()) {
@@ -39,6 +41,13 @@ class ResetPasswordController extends AbstractController
         $confirmPassword = '';
 
         if ($request->isMethod('POST')) {
+            // Validate CSRF token
+            $csrfToken = $request->request->get('_csrf_token');
+            if (!$csrfTokenManager->isTokenValid(new \Symfony\Component\Security\Csrf\CsrfToken('reset_password', $csrfToken))) {
+                $this->addFlash('error', 'Invalid security token. Please try again.');
+                return $this->redirectToRoute('app_forgot_password');
+            }
+
             $password = $request->request->get('password', '');
             $confirmPassword = $request->request->get('confirm_password', '');
 

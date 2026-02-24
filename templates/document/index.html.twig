@@ -9,7 +9,7 @@
 			<p class="page-subtitle">Browse and manage all your documents</p>
 		</div>
 		<div class="page-actions">
-			{% if is_granted('ROLE_ADMIN') %}
+			{% if is_granted('DOCUMENT_DELETE') %}
 				<a href="{{ path('app_document_trash') }}" class="btn btn-warning">🗑️ Trash</a>
 			{% endif %}
 		</div>
@@ -98,10 +98,14 @@
 								</td>
 								<td>
 									{% if doc.client %}
-										<a href="{{ path('app_client_show', {id: doc.client.id}) }}">
-											{{ doc.client.firstName }}
-											{{ doc.client.lastName }}
-										</a>
+										{% if is_granted('CLIENT_VIEW') %}
+											<a href="{{ path('app_client_show', {id: doc.client.id}) }}">
+												{{ doc.client.firstName }}
+												{{ doc.client.lastName }}
+											</a>
+										{% else %}
+											{{ doc.client.firstName }} {{ doc.client.lastName }}
+										{% endif %}
 									{% else %}
 										<span class="text-muted">—</span>
 									{% endif %}
@@ -133,14 +137,20 @@
 											<a href="{{ path('app_document_preview', {id: doc.id}) }}" target="_blank" class="btn btn-sm btn-info" title="Preview">👁️</a>
 										{% endif %}
 										{# Download button #}
-										<a href="{{ path('app_document_download', {id: doc.id}) }}" class="btn btn-sm btn-success" title="Download">⬇</a>
-										{# Edit button #}
-										<a href="{{ path('app_document_edit', {id: doc.id}) }}" class="btn btn-sm btn-secondary" title="Edit">✏️</a>
-										{# Delete button (soft delete) #}
-										<form method="post" action="{{ path('app_document_delete', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('Move to trash?');">
-											<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ doc.id) }}">
-											<button type="submit" class="btn btn-sm btn-danger" title="Move to trash">🗑️</button>
-										</form>
+										{% if is_granted('DOCUMENT_DOWNLOAD') %}
+											<a href="{{ path('app_document_download', {id: doc.id}) }}" class="btn btn-sm btn-success" title="Download">⬇</a>
+										{% endif %}
+										{# Edit button - only for users with DOCUMENT_EDIT permission #}
+										{% if is_granted('DOCUMENT_EDIT') %}
+											<a href="{{ path('app_document_edit', {id: doc.id}) }}" class="btn btn-sm btn-secondary" title="Edit">✏️</a>
+										{% endif %}
+										{# Delete button (soft delete) - only for users with DOCUMENT_DELETE permission #}
+										{% if is_granted('DOCUMENT_DELETE') %}
+											<form method="post" action="{{ path('app_document_delete', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('Move to trash?');">
+												<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ doc.id) }}">
+												<button type="submit" class="btn btn-sm btn-danger" title="Move to trash">🗑️</button>
+											</form>
+										{% endif %}
 									</div>
 								</td>
 							</tr>

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Client;
 use App\Entity\Document;
+use App\Enum\Permission;
 use App\Form\DocumentType;
 use App\Repository\ClientRepository;
 use App\Repository\DocumentRepository;
@@ -19,13 +20,13 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Vich\UploaderBundle\Handler\DownloadHandler;
 
 #[Route('/documents')]
-#[IsGranted('ROLE_USER')]
 final class DocumentController extends AbstractController
 {
     /**
      * List all documents with search and filters
      */
     #[Route('', name: 'app_document_index', methods: ['GET'])]
+    #[IsGranted(Permission::DOCUMENTS_VIEW_LIST)]
     public function index(
         Request $request,
         DocumentRepository $documentRepository,
@@ -67,7 +68,6 @@ final class DocumentController extends AbstractController
                 'dateTo' => $dateTo,
             ],
             'clients' => $clientRepository->findAll(),
-            'categories' => $categoryRepository->findAll(),
         ]);
     }
 
@@ -75,7 +75,7 @@ final class DocumentController extends AbstractController
      * Trash - view deleted documents
      */
     #[Route('/trash', name: 'app_document_trash', methods: ['GET'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(Permission::DOCUMENTS_DELETE)]
     public function trash(DocumentRepository $documentRepository): Response
     {
         $deletedDocuments = $documentRepository->findDeleted();
@@ -89,7 +89,7 @@ final class DocumentController extends AbstractController
      * Restore document from trash
      */
     #[Route('/{id}/restore', name: 'app_document_restore', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(Permission::DOCUMENTS_DELETE)]
     public function restore(Request $request, Document $document, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         if ($this->isCsrfTokenValid('restore-document-' . $document->getId(), $request->request->get('_token'))) {
@@ -108,7 +108,7 @@ final class DocumentController extends AbstractController
      * Permanently delete document
      */
     #[Route('/{id}/permanent-delete', name: 'app_document_permanent_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(Permission::DOCUMENTS_DELETE)]
     public function permanentDelete(Request $request, Document $document, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         if ($this->isCsrfTokenValid('permanent-delete-document-' . $document->getId(), $request->request->get('_token'))) {
@@ -140,6 +140,7 @@ final class DocumentController extends AbstractController
      * List all documents for a given client (legacy route).
      */
     #[Route('/client/{id}', name: 'app_document_list', methods: ['GET'])]
+    #[IsGranted(Permission::DOCUMENTS_VIEW_LIST)]
     public function list(Client $client, DocumentRepository $documentRepository): Response
     {
         $documents = $documentRepository->findByClient($client);
@@ -154,6 +155,7 @@ final class DocumentController extends AbstractController
      * Upload a new document for a client.
      */
     #[Route('/client/{id}/new', name: 'app_document_new', methods: ['GET', 'POST'])]
+    #[IsGranted(Permission::DOCUMENTS_CREATE_UPLOAD)]
     public function new(Request $request, Client $client, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $document = new Document();
@@ -192,6 +194,7 @@ final class DocumentController extends AbstractController
      * Show document details with preview support.
      */
     #[Route('/{id}/show', name: 'app_document_show', methods: ['GET'])]
+    #[IsGranted(Permission::DOCUMENTS_VIEW_DETAILS)]
     public function show(Document $document): Response
     {
         return $this->render('document/show.html.twig', [
@@ -203,6 +206,7 @@ final class DocumentController extends AbstractController
      * Preview document inline (PDF or Image).
      */
     #[Route('/{id}/preview', name: 'app_document_preview', methods: ['GET'])]
+    #[IsGranted(Permission::DOCUMENTS_VIEW_DETAILS)]
     public function preview(Document $document, DownloadHandler $downloadHandler): Response
     {
         // Check if document can be previewed
@@ -225,6 +229,7 @@ final class DocumentController extends AbstractController
      * Download a document file.
      */
     #[Route('/{id}/download', name: 'app_document_download', methods: ['GET'])]
+    #[IsGranted(Permission::DOCUMENTS_DOWNLOAD)]
     public function download(Document $document, DownloadHandler $downloadHandler, ActivityLogger $activityLogger): Response
     {
         $activityLogger->logDownload($this->getUser(), $document);
@@ -242,6 +247,7 @@ final class DocumentController extends AbstractController
      * Soft delete a document (move to trash).
      */
     #[Route('/{id}/delete', name: 'app_document_delete', methods: ['POST'])]
+    #[IsGranted(Permission::DOCUMENTS_DELETE)]
     public function delete(Request $request, Document $document, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $clientId = $document->getClient()?->getId();
@@ -267,6 +273,7 @@ final class DocumentController extends AbstractController
      * Edit document metadata (not the file).
      */
     #[Route('/{id}/edit', name: 'app_document_edit', methods: ['GET', 'POST'])]
+    #[IsGranted(Permission::DOCUMENTS_EDIT)]
     public function edit(Request $request, Document $document, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $form = $this->createForm(DocumentType::class, $document, ['is_new' => false]);

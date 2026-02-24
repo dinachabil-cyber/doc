@@ -15,8 +15,12 @@
 				{{ client.lastName }}</p>
 		</div>
 		<div class="page-actions">
-			<a href="{{ path('app_document_new', {id: client.id}) }}" class="btn btn-primary">➕ Upload Document</a>
-			<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-secondary">← Back</a>
+			{% if is_granted('DOCUMENT_UPLOAD') %}
+				<a href="{{ path('app_document_new', {id: client.id}) }}" class="btn btn-primary">➕ Upload Document</a>
+			{% endif %}
+			{% if is_granted('CLIENT_VIEW') %}
+				<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-secondary">← Back</a>
+			{% endif %}
 		</div>
 	</div>
 
@@ -26,7 +30,9 @@
 				<div class="empty-state-icon">📂</div>
 				<h3>No documents yet</h3>
 				<p>Upload the first document for this client.</p>
-				<a href="{{ path('app_document_new', {id: client.id}) }}" class="btn btn-primary">➕ Upload Document</a>
+				{% if is_granted('DOCUMENT_UPLOAD') %}
+					<a href="{{ path('app_document_new', {id: client.id}) }}" class="btn btn-primary">➕ Upload Document</a>
+				{% endif %}
 			</div>
 		</div>
 	{% else %}
@@ -64,12 +70,16 @@
 								<td class="text-muted">{{ doc.createdAt|date('d/m/Y H:i') }}</td>
 								<td>
 									<div style="display: flex; gap: 0.5rem;">
-										<a href="{{ path('app_document_download', {id: doc.id}) }}" class="btn btn-sm btn-success">⬇</a>
+										{% if is_granted('DOCUMENT_DOWNLOAD') %}
+											<a href="{{ path('app_document_download', {id: doc.id}) }}" class="btn btn-sm btn-success">⬇</a>
+										{% endif %}
 										<a href="{{ path('app_document_show', {id: doc.id}) }}" class="btn btn-sm btn-secondary">View</a>
-										<form method="post" action="{{ path('app_document_delete', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('Delete this document?');">
-											<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ doc.id) }}">
-											<button type="submit" class="btn btn-sm btn-danger">🗑</button>
-										</form>
+										{% if is_granted('DOCUMENT_DELETE') %}
+											<form method="post" action="{{ path('app_document_delete', {id: doc.id}) }}" class="inline-form" onsubmit="return confirm('Delete this document?');">
+												<input type="hidden" name="_token" value="{{ csrf_token('delete-document-' ~ doc.id) }}">
+												<button type="submit" class="btn btn-sm btn-danger">🗑</button>
+											</form>
+										{% endif %}
 									</div>
 								</td>
 							</tr>

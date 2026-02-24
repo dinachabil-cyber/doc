@@ -15,8 +15,12 @@
 			<p class="page-subtitle">Client details and documents</p>
 		</div>
 		<div class="page-actions">
-			<a href="{{ path('app_client_edit', {id: client.id}) }}" class="btn btn-secondary">✏️ Edit</a>
-			<a href="{{ path('app_document_new', {id: client.id}) }}" class="btn btn-primary">📄 Upload</a>
+			{% if is_granted('CLIENT_MANAGE') %}
+				<a href="{{ path('app_client_edit', {id: client.id}) }}" class="btn btn-secondary">✏️ Edit</a>
+			{% endif %}
+			{% if is_granted('DOCUMENT_MANAGE') %}
+				<a href="{{ path('app_document_new', {id: client.id}) }}" class="btn btn-primary">📄 Upload</a>
+			{% endif %}
 		</div>
 	</div>
 

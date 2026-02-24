@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Client;
+use App\Enum\Permission;
 use App\Form\ClientType;
 use App\Repository\ClientRepository;
 use App\Service\ActivityLogger;
@@ -12,12 +13,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Vich\UploaderBundle\Handler\DownloadHandler;
 
 #[Route('/clients')]
 #[IsGranted('ROLE_USER')]
 final class ClientController extends AbstractController
 {
     #[Route('', name: 'app_client_index', methods: ['GET'])]
+    #[IsGranted(Permission::CLIENTS_VIEW_LIST)]
     public function index(ClientRepository $clientRepository): Response
     {
         return $this->render('client/index.html.twig', [
@@ -26,6 +30,7 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/new', name: 'app_client_new', methods: ['GET', 'POST'])]
+    #[IsGranted(Permission::CLIENTS_CREATE)]
     public function new(Request $request, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $client = new Client();
@@ -50,6 +55,7 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_client_show', methods: ['GET'])]
+    #[IsGranted(Permission::CLIENTS_VIEW_DETAILS)]
     public function show(Client $client): Response
     {
         return $this->render('client/show.html.twig', [
@@ -58,6 +64,7 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_client_edit', methods: ['GET', 'POST'])]
+    #[IsGranted(Permission::CLIENTS_EDIT)]
     public function edit(Request $request, Client $client, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         $form = $this->createForm(ClientType::class, $client);
@@ -80,6 +87,7 @@ final class ClientController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'app_client_delete', methods: ['POST'])]
+    #[IsGranted(Permission::CLIENTS_DELETE)]
     public function delete(Request $request, Client $client, EntityManagerInterface $em, ActivityLogger $activityLogger): Response
     {
         if ($this->isCsrfTokenValid('delete-client-' . $client->getId(), $request->request->get('_token'))) {

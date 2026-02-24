@@ -1,53 +1,140 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit User Roles - DocManager{% endblock %}
+{% block title %}Edit User Roles & Permissions - DocManager{% endblock %}
 
 {% block body %}
 	<div class="page-header">
 		<div>
-			<h1 class="page-title">🛠️ Edit User Roles</h1>
-			<p class="page-subtitle">Manage roles for {{ u.email }}</p>
+			<h1 class="page-title">🛠️ Edit User Roles & Permissions</h1>
+			<p class="page-subtitle">Manage roles and permissions for <strong>{{ u.email }}</strong></p>
 		</div>
 		<div class="page-actions">
-			<a href="{{ path('admin_users_index') }}" class="btn btn-secondary">← Back</a>
+			<a href="{{ path('admin_users_index') }}" class="btn btn-secondary">← Back to Users</a>
 		</div>
 	</div>
 
-	<div class="card" style="max-width: 500px;">
+	{# Permission Sets Quick Selection #}
+	<div class="card" style="margin-bottom: 1.5rem;">
+		<div class="card-header">
+			<h2 class="card-title" style="margin: 0; font-size: 1.1rem;">⚡ Quick Permission Sets</h2>
+		</div>
 		<div class="card-body">
-			{{ form_start(form) }}
-			
-			<div class="form-group">
-				{{ form_label(form.roles) }}
-				<div class="roles-options">
+			<p style="color: var(--text-secondary); margin-bottom: 1rem;">
+				Select a preset to quickly apply common permission levels, or customize individual permissions below.
+			</p>
+			<div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+				<button type="button" class="btn btn-outline-primary permission-set-btn" data-set="read_only">
+					📖 Read-only
+				</button>
+				<button type="button" class="btn btn-outline-primary permission-set-btn" data-set="client_view_only">
+					👁️ Client-view-only
+				</button>
+				<button type="button" class="btn btn-outline-primary permission-set-btn" data-set="limited">
+					📤 Limited
+				</button>
+				<button type="button" class="btn btn-outline-primary permission-set-btn" data-set="full">
+					🛡️ Full Access
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<form method="post" id="permissionsForm">
+		{{ form_widget(form._token) }}
+		{# Roles Section #}
+		<div class="card" style="margin-bottom: 1.5rem;">
+			<div class="card-header">
+				<h2 class="card-title" style="margin: 0; font-size: 1.1rem;">🎭 Roles</h2>
+			</div>
+			<div class="card-body">
+				<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
 					{% for child in form.roles %}
-						<div class="form-check">
-							{{ form_widget(child, { 'attr': { 'class': 'form-check-input' } }) }}
-							{{ form_label(child, null, { 'label_attr': { 'class': 'form-check-label' } }) }}
+						<div class="form-check" style="display: flex; align-items: center; gap: 0.5rem;">
+							{{ form_widget(child, { 'attr': { 'class': 'form-check-input role-checkbox', 'data-role': child.vars.value } }) }}
+							{{ form_label(child, null, { 'label_attr': { 'class': 'form-check-label', 'style': 'font-weight: 500;' } }) }}
 						</div>
 					{% endfor %}
 				</div>
-				{{ form_errors(form.roles) }}
+				<p style="color: var(--text-secondary); margin-top: 1rem; font-size: 0.9rem;">
+					<strong>Note:</strong> Admin role grants full access to everything. Regular users need explicit permissions.
+				</p>
 			</div>
-
-			<div class="form-actions">
-				<button type="submit" class="btn btn-primary">💾 Save Changes</button>
-				<a href="{{ path('admin_users_index') }}" class="btn btn-secondary">Cancel</a>
-			</div>
-
-			{{ form_end(form) }}
 		</div>
-	</div>
 
-	<div class="card" style="max-width: 500px; margin-top: 1rem;">
+		{# Permissions Section #}
+		<div class="card" style="margin-bottom: 1.5rem;">
+			<div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+				<h2 class="card-title" style="margin: 0; font-size: 1.1rem;">🔐 Permissions</h2>
+				<div style="display: flex; gap: 0.5rem;">
+					<button type="button" class="btn btn-sm btn-outline-secondary select-all-group" data-action="select">Select All</button>
+					<button type="button" class="btn btn-sm btn-outline-secondary select-all-group" data-action="deselect">Deselect All</button>
+				</div>
+			</div>
+			<div class="card-body">
+				<p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+					Grant specific permissions to control what this user can see and do. Admin users automatically have all permissions.
+				</p>
+
+				{# Permission Groups with Toggle Switches #}
+				{% for groupName, permissions in permissionGroups %}
+					<div class="permission-group-card" style="margin-bottom: 1.5rem;">
+						<div class="permission-group-header" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: 0.5rem 0.5rem 0 0; border-bottom: 1px solid var(--border-color);">
+							<h3 style="margin: 0; font-size: 1rem; color: var(--text-primary);">{{ groupName }}</h3>
+							<div style="display: flex; gap: 0.5rem;">
+								<button type="button" class="btn btn-xs btn-outline-primary select-group" data-group="{{ groupName|replace({' ': '_'}) }}">Select All</button>
+								<button type="button" class="btn btn-xs btn-outline-secondary deselect-group" data-group="{{ groupName|replace({' ': '_'}) }}">Clear</button>
+							</div>
+						</div>
+						<div class="permission-group-body" style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+							{% set fieldName = 'permissions_' ~ groupName|replace({' ': '_'}) %}
+							{% set permissionField = attribute(form, fieldName) %}
+							{% if permissionField %}
+								{% for child in permissionField %}
+									<div class="permission-toggle" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 0.5rem; transition: all 0.2s ease;">
+										<label for="{{ child.vars.id }}" class="permission-label" style="margin: 0; cursor: pointer; flex: 1;">
+											<span style="font-weight: 500;">{{ child.vars.label }}</span>
+										</label>
+										<div class="toggle-switch" style="position: relative;">
+											{{ form_widget(child, { 
+												'attr': { 
+													'class': 'permission-checkbox toggle-input',
+													'data-group': groupName|replace({' ': '_'})
+												} 
+											}) }}
+											<label for="{{ child.vars.id }}" class="toggle-label" style=""></label>
+										</div>
+									</div>
+								{% endfor %}
+							{% endif %}
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		{# Form Actions #}
+		<div style="display: flex; gap: 1rem; justify-content: flex-end; padding: 1rem 0;">
+			<a href="{{ path('admin_users_index') }}" class="btn btn-secondary">Cancel</a>
+			<button type="submit" class="btn btn-primary btn-lg" style="min-width: 200px;">
+				💾 Save Changes
+			</button>
+		</div>
+	</form>
+
+	{# User Info Card #}
+	<div class="card" style="max-width: 500px;">
 		<div class="card-header">
-			<h2 class="card-title" style="margin: 0; font-size: 1rem;">👤 User Info</h2>
+			<h2 class="card-title" style="margin: 0; font-size: 1rem;">👤 User Information</h2>
 		</div>
 		<div class="card-body">
 			<table class="info-table">
 				<tr>
 					<th>Email</th>
-					<td>{{ u.email }}</td>
+					<td><a href="mailto:{{ u.email }}">{{ u.email }}</a></td>
+				</tr>
+				<tr>
+					<th>User ID</th>
+					<td>{{ u.id }}</td>
 				</tr>
 				<tr>
 					<th>Current Roles</th>
@@ -57,28 +144,235 @@
 						{% endfor %}
 					</td>
 				</tr>
+				<tr>
+					<th>Access Level</th>
+					<td>
+						{% set level = u.permissionLevel %}
+						{% if level == 'Admin' %}
+							<span class="badge badge-red">Admin</span>
+						{% elseif level == 'Full' %}
+							<span class="badge badge-green">Full</span>
+						{% elseif level == 'Limited' %}
+							<span class="badge badge-yellow">Limited</span>
+						{% elseif level == 'Read-only' %}
+							<span class="badge badge-cyan">Read-only</span>
+						{% else %}
+							<span class="badge badge-gray">None</span>
+						{% endif %}
+					</td>
+				</tr>
+				<tr>
+					<th>Assigned Permissions</th>
+					<td>
+						{% if u.permissions|length > 0 %}
+							<div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+								{% for permission in u.permissions %}
+									<span class="badge badge-cyan" style="font-size: 0.75rem;">{{ permission }}</span>
+								{% endfor %}
+							</div>
+						{% else %}
+							<span class="text-muted">None assigned</span>
+						{% endif %}
+					</td>
+				</tr>
 			</table>
 		</div>
 	</div>
 
+	{# Hidden data for JavaScript #}
+	<div id="permissionSetsData" data-sets="{{ permission_sets|json_encode|e('html_attr') }}" style="display: none;"></div>
+
 	<style>
-		.roles-options {
-			display: flex;
-			flex-direction: column;
-			gap: 0.75rem;
-			margin-top: 0.5rem;
-		}
-		.form-check {
-			display: flex;
+		/* Toggle Switch Styles */
+		.toggle-switch {
+			display: inline-flex;
 			align-items: center;
-			gap: 0.5rem;
 		}
-		.form-check-input {
+		
+		.toggle-input {
+			position: absolute;
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+		
+		.toggle-label {
+			width: 44px;
+			height: 24px;
+			background-color: var(--bg-secondary);
+			border: 1px solid var(--border-color);
+			border-radius: 24px;
+			position: relative;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+		
+		.toggle-label::before {
+			content: '';
+			position: absolute;
+			top: 2px;
+			left: 2px;
+			width: 18px;
+			height: 18px;
+			background-color: white;
+			border-radius: 50%;
+			transition: all 0.3s ease;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		}
+		
+		.toggle-input:checked + .toggle-label {
+			background-color: var(--primary-color);
+			border-color: var(--primary-color);
+		}
+		
+		.toggle-input:checked + .toggle-label::before {
+			transform: translateX(20px);
+		}
+		
+		.toggle-input:focus + .toggle-label {
+			box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+		}
+
+		/* Permission Set Buttons */
+		.permission-set-btn {
+			transition: all 0.2s ease;
+		}
+		
+		.permission-set-btn:hover {
+			transform: translateY(-1px);
+		}
+		
+		.permission-set-btn.active {
+			background-color: var(--primary-color);
+			border-color: var(--primary-color);
+			color: white;
+		}
+
+		/* Permission Group Card */
+		.permission-group-card {
+			border: 1px solid var(--border-color);
+			border-radius: 0.5rem;
+			overflow: hidden;
+		}
+		
+		.permission-toggle:hover {
+			border-color: var(--primary-color);
+			box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+		}
+
+		/* Role Checkbox Styling */
+		.role-checkbox {
 			width: 1.25rem;
 			height: 1.25rem;
 		}
-		.form-check-label {
-			font-size: 1rem;
+
+		/* Button XS */
+		.btn-xs {
+			padding: 0.25rem 0.5rem;
+			font-size: 0.75rem;
 		}
 	</style>
+
+	<script>
+		// Permission Sets from PHP
+		const permissionSets = {{ permission_sets|json_encode|raw }};
+		
+		// Current selected group
+		let currentGroup = null;
+
+		// Quick Permission Set Buttons
+		document.querySelectorAll('.permission-set-btn').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const setKey = btn.dataset.set;
+				const setData = permissionSets[setKey];
+				
+				if (!setData) return;
+				
+				// Update button states
+				document.querySelectorAll('.permission-set-btn').forEach(b => b.classList.remove('active'));
+				btn.classList.add('active');
+				
+				// Get all permission checkboxes
+				const checkboxes = document.querySelectorAll('.permission-checkbox');
+				
+				// Deselect all first
+				checkboxes.forEach(cb => cb.checked = false);
+				
+				// Select permissions from the set
+				setData.permissions.forEach(perm => {
+					checkboxes.forEach(cb => {
+						if (cb.value === perm) {
+							cb.checked = true;
+							// Trigger change event for visual update
+							cb.dispatchEvent(new Event('change'));
+						}
+					});
+				});
+			});
+		});
+
+		// Select All / Deselect All buttons
+		document.querySelectorAll('.select-all-group').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const action = btn.dataset.action;
+				const checkboxes = document.querySelectorAll('.permission-checkbox');
+				checkboxes.forEach(cb => {
+					cb.checked = (action === 'select');
+					cb.dispatchEvent(new Event('change'));
+				});
+			});
+		});
+
+		// Group-specific Select / Clear buttons
+		document.querySelectorAll('.select-group').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const group = btn.dataset.group;
+				const checkboxes = document.querySelectorAll(`.permission-checkbox[data-group="${group}"]`);
+				checkboxes.forEach(cb => {
+					cb.checked = true;
+					cb.dispatchEvent(new Event('change'));
+				});
+			});
+		});
+
+		document.querySelectorAll('.deselect-group').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const group = btn.dataset.group;
+				const checkboxes = document.querySelectorAll(`.permission-checkbox[data-group="${group}"]`);
+				checkboxes.forEach(cb => {
+					cb.checked = false;
+					cb.dispatchEvent(new Event('change'));
+				});
+			});
+		});
+
+		// Role checkbox handler - disable permissions for admin
+		document.querySelectorAll('.role-checkbox').forEach(cb => {
+			cb.addEventListener('change', () => {
+				const isAdmin = cb.checked && cb.dataset.role === 'ROLE_ADMIN';
+				const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
+				
+				if (isAdmin) {
+					// Disable all permission checkboxes for admin
+					permissionCheckboxes.forEach(pcb => {
+						pcb.disabled = true;
+						pcb.checked = true;
+					});
+				} else {
+					// Re-enable permission checkboxes
+					permissionCheckboxes.forEach(pcb => {
+						pcb.disabled = false;
+					});
+				}
+			});
+		});
+
+		// Initialize: Check if user is admin
+		const adminCheckbox = document.querySelector('.role-checkbox[data-role="ROLE_ADMIN"]');
+		if (adminCheckbox && adminCheckbox.checked) {
+			document.querySelectorAll('.permission-checkbox').forEach(pcb => {
+				pcb.disabled = true;
+			});
+		}
+	</script>
 {% endblock %}

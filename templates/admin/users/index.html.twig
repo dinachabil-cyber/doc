@@ -1,36 +1,138 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Admin - Users{% endblock %}
+{% block title %}Admin - Users - DocManager{% endblock %}
 
 {% block body %}
-  <h1>Users</h1>
+	<div class="page-header">
+		<div>
+			<h1 class="page-title">👥 User Management</h1>
+			<p class="page-subtitle">Manage users, roles and permissions</p>
+		</div>
+	</div>
 
-  {% for m in app.flashes('success') %}
-    <div class="alert alert-success">{{ m }}</div>
-  {% endfor %}
+	{# Stats Cards #}
+	<div class="stats-grid">
+		<div class="stat-card">
+			<div class="stat-icon cyan">👥</div>
+			<div>
+				<div class="stat-value">{{ users|length }}</div>
+				<div class="stat-label">Total Users</div>
+			</div>
+		</div>
+		{% set adminCount = users|filter(u => 'ROLE_ADMIN' in u.roles)|length %}
+		{% set userCount = users|length - adminCount %}
+		<div class="stat-card">
+			<div class="stat-icon red">🛡️</div>
+			<div>
+				<div class="stat-value">{{ adminCount }}</div>
+				<div class="stat-label">Admins</div>
+			</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-icon green">👤</div>
+			<div>
+				<div class="stat-value">{{ userCount }}</div>
+				<div class="stat-label">Regular Users</div>
+			</div>
+		</div>
+	</div>
 
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Email</th>
-        <th>Roles</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for u in users %}
-      <tr>
-        <td>{{ u.id }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ u.roles|json_encode }}</td>
-        <td>
-          <a class="btn btn-sm btn-primary" href="{{ path('admin_users_roles', {id: u.id}) }}">
-            Edit Roles
-          </a>
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+	{% for m in app.flashes('success') %}
+		<div class="alert alert-success">{{ m }}</div>
+	{% endfor %}
+
+	<div class="card" style="padding: 0; overflow: hidden;">
+		<div class="table-container">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Email</th>
+						<th>Username</th>
+						<th>Roles</th>
+						<th>Access Level</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for u in users %}
+						<tr>
+							<td>{{ u.id }}</td>
+							<td>
+								<a href="mailto:{{ u.email }}">{{ u.email }}</a>
+							</td>
+							<td>{{ u.username ?? '<span class="text-muted">—</span>'|raw }}</td>
+							<td>
+								{% for role in u.roles %}
+									{% if role == 'ROLE_ADMIN' %}
+										<span class="badge badge-red">{{ role }}</span>
+									{% elseif role == 'ROLE_USER' %}
+										<span class="badge badge-blue">{{ role }}</span>
+									{% else %}
+										<span class="badge badge-gray">{{ role }}</span>
+									{% endif %}
+								{% endfor %}
+							</td>
+							<td>
+								{# Permission Level Badge #}
+								{% set level = u.permissionLevel %}
+								{% if level == 'Admin' %}
+									<span class="badge badge-red" title="Full system access">Admin</span>
+								{% elseif level == 'Full' %}
+									<span class="badge badge-green" title="Full access (except user management)">Full</span>
+								{% elseif level == 'Limited' %}
+									<span class="badge badge-yellow" title="View and upload documents">Limited</span>
+								{% elseif level == 'Read-only' %}
+									<span class="badge badge-cyan" title="View lists and details only">Read-only</span>
+								{% else %}
+									<span class="badge badge-gray" title="No permissions assigned">None</span>
+								{% endif %}
+							</td>
+							<td>
+								{# Hide Edit Roles button if user is admin or is the current user #}
+								{% if u.id != app.user.id and 'ROLE_ADMIN' not in u.roles %}
+									<a class="btn btn-sm btn-primary" href="{{ path('admin_users_roles', {id: u.id}) }}">
+										⚙️ Edit Roles
+									</a>
+								{% else %}
+									<span class="text-muted">—</span>
+								{% endif %}
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	{# Legend #}
+	<div class="card" style="margin-top: 1.5rem; max-width: 600px;">
+		<div class="card-header">
+			<h3 class="card-title" style="margin: 0; font-size: 1rem;">📋 Access Level Legend</h3>
+		</div>
+		<div class="card-body">
+			<div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+				<div style="display: flex; align-items: center; gap: 0.5rem;">
+					<span class="badge badge-red">Admin</span>
+					<span class="text-muted">Full system access</span>
+				</div>
+				<div style="display: flex; align-items: center; gap: 0.5rem;">
+					<span class="badge badge-green">Full</span>
+					<span class="text-muted">Full access (clients & documents)</span>
+				</div>
+				<div style="display: flex; align-items: center; gap: 0.5rem;">
+					<span class="badge badge-yellow">Limited</span>
+					<span class="text-muted">View & upload documents</span>
+				</div>
+				<div style="display: flex; align-items: center; gap: 0.5rem;">
+					<span class="badge badge-cyan">Read-only</span>
+					<span class="text-muted">View lists & details only</span>
+				</div>
+				<div style="display: flex; align-items: center; gap: 0.5rem;">
+					<span class="badge badge-gray">None</span>
+					<span class="text-muted">No permissions</span>
+				</div>
+			</div>
+		</div>
+	</div>
 {% endblock %}

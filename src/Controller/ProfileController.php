@@ -36,7 +36,8 @@ class ProfileController extends AbstractController
     public function edit(
         Request $request,
         EntityManagerInterface $em,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        UserPasswordHasherInterface $hasher
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_USER');
 
@@ -52,8 +53,16 @@ class ProfileController extends AbstractController
         $errors = [];
         
         if ($request->isMethod('POST')) {
+            $currentPassword = $request->request->get('current_password', '');
             $email = $request->request->get('email');
             $username = $request->request->get('username');
+            
+            // Validate current password is required for any profile changes
+            if (empty($currentPassword)) {
+                $errors['current_password'] = 'Current password is required to make changes.';
+            } elseif (!$hasher->isPasswordValid($user, $currentPassword)) {
+                $errors['current_password'] = 'Current password is incorrect.';
+            }
             
             // Validate email
             if (empty($email)) {

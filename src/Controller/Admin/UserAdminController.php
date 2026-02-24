@@ -4,11 +4,13 @@ namespace App\Controller\Admin;
 
 use App\Entity\User;
 use App\Form\AdminUserRolesType;
+use App\Enum\Permission;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 #[Route('/admin/users')]
 class UserAdminController extends AbstractController
@@ -33,24 +35,54 @@ class UserAdminController extends AbstractController
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
+        // SECURITY: Block editing admin users
+        if ($user->isAdmin()) {
+            $this->addFlash('error', '❌ Cannot edit admin users. Admin accounts have full access by default.');
+            return $this->redirectToRoute('admin_users_index');
+        }
+
+        // SECURITY: Block editing self
+        $currentUser = $this->getUser();
+        if ($currentUser instanceof User && $currentUser->getId() === $user->getId()) {
+            $this->addFlash('error', '❌ You cannot edit your own roles.');
+            return $this->redirectToRoute('admin_users_index');
+        }
+
         $form = $this->createForm(AdminUserRolesType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // guard: ماتخليش user يبقى بلا ROLE_USER
+            // Guard: Don't let user be without ROLE_USER
             if (!in_array('ROLE_USER', $user->getRoles(), true)) {
                 $user->setRoles(array_merge($user->getRoles(), ['ROLE_USER']));
             }
 
+            // Handle permissions from unmapped form fields
+            $allPermissions = [];
+            $formData = $request->request->get('admin_user_roles_type');
+            
+            if ($formData) {
+                foreach (Permission::getGroups() as $groupName => $permissions) {
+                    $fieldName = 'permissions_' . str_replace(' ', '_', $groupName);
+                    if (isset($formData[$fieldName]) && is_array($formData[$fieldName])) {
+                        $allPermissions = array_merge($allPermissions, $formData[$fieldName]);
+                    }
+                }
+            }
+            
+            $user->setPermissions($allPermissions);
+
             $em->flush();
 
-            $this->addFlash('success', 'Roles updated ✅');
+            $this->addFlash('success', '✅ Roles and permissions updated successfully.');
             return $this->redirectToRoute('admin_users_index');
         }
 
         return $this->render('admin/users/roles.html.twig', [
             'u' => $user,
             'form' => $form->createView(),
+            'permissionGroups' => Permission::getGroups(),
+            'permission_sets' => Permission::getPermissionSets(),
         ]);
     }
 }

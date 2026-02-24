@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Security\LoginFormAuthenticator;
+use App\Enum\Permission;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -31,6 +32,9 @@ class RegistrationController extends AbstractController
 
             // Ensure user has ROLE_USER by default
             $user->setRoles(['ROLE_USER']);
+
+            // Assign default permissions for ROLE_USER
+            $user->setPermissions(Permission::getDefaultsForRole('ROLE_USER'));
 
             $entityManager->persist($user);
             $entityManager->flush();

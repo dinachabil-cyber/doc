@@ -1,7 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Clients - DocManager
-{% endblock %}
+{% block title %}Clients - DocManager{% endblock %}
 
 {% block body %}
 	<div class="page-header">
@@ -10,7 +9,9 @@
 			<p class="page-subtitle">Manage your clients and their documents</p>
 		</div>
 		<div class="page-actions">
-			<a href="{{ path('app_client_new') }}" class="btn btn-primary">➕ New Client</a>
+			{% if is_granted('clients.create') %}
+				<a href="{{ path('app_client_new') }}" class="btn btn-primary">➕ New Client</a>
+			{% endif %}
 		</div>
 	</div>
 
@@ -39,7 +40,9 @@
 				<div class="empty-state-icon">👥</div>
 				<h3>No clients yet</h3>
 				<p>Create your first client to start managing documents.</p>
-				<a href="{{ path('app_client_new') }}" class="btn btn-primary">➕ Create Client</a>
+				{% if is_granted('clients.create') %}
+					<a href="{{ path('app_client_new') }}" class="btn btn-primary">➕ Create Client</a>
+				{% endif %}
 			</div>
 		</div>
 	{% else %}
@@ -51,32 +54,58 @@
 							<th>Name</th>
 							<th>Email</th>
 							<th>Phone</th>
-							<th>Documents</th>
+							{# Documents column - controlled by permission #}
+							{% if is_granted('clients.view_documents_column') %}
+								<th>Documents</th>
+							{% endif %}
 							<th>Created</th>
-							<th>Actions</th>
+							{# Actions column - controlled by permission #}
+							{% if is_granted('clients.view_actions_column') %}
+								<th>Actions</th>
+							{% endif %}
 						</tr>
 					</thead>
 					<tbody>
 						{% for client in clients %}
 							<tr>
 								<td>
-									<a href="{{ path('app_client_show', {id: client.id}) }}" style="font-weight: 600; color: var(--text-primary);">
-										{{ client.firstName }}
-										{{ client.lastName }}
-									</a>
+									{# Name always shown, but link controlled by permission #}
+									{% if is_granted('clients.view_details') %}
+										<a href="{{ path('app_client_show', {id: client.id}) }}" style="font-weight: 600; color: var(--text-primary);">
+											{{ client.firstName }}
+											{{ client.lastName }}
+										</a>
+									{% else %}
+										<span style="font-weight: 600; color: var(--text-primary);">
+											{{ client.firstName }}
+											{{ client.lastName }}
+										</span>
+									{% endif %}
 								</td>
 								<td>{{ client.email ?? '<span class="text-muted">—</span>'|raw }}</td>
 								<td>{{ client.phone ?? '<span class="text-muted">—</span>'|raw }}</td>
-								<td>
-									<span class="badge badge-cyan">{{ client.documents|length }}</span>
-								</td>
+								{# Documents column - controlled by permission #}
+								{% if is_granted('clients.view_documents_column') %}
+									<td>
+										<span class="badge badge-cyan">{{ client.documents|length }}</span>
+									</td>
+								{% endif %}
 								<td class="text-muted">{{ client.createdAt|date('d/m/Y') }}</td>
-								<td>
-									<div style="display: flex; gap: 0.5rem;">
-										<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-sm btn-secondary">View</a>
-										<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-sm btn-primary">📄</a>
-									</div>
-								</td>
+								{# Actions column - controlled by permission #}
+								{% if is_granted('clients.view_actions_column') %}
+									<td>
+										<div style="display: flex; gap: 0.5rem;">
+											{# View button - controlled by permission #}
+											{% if is_granted('clients.view_view_button') %}
+												<a href="{{ path('app_client_show', {id: client.id}) }}" class="btn btn-sm btn-secondary">View</a>
+											{% endif %}
+											{# Documents button - controlled by document view permission #}
+											{% if is_granted('documents.view_list') %}
+												<a href="{{ path('app_document_list', {id: client.id}) }}" class="btn btn-sm btn-primary" title="View Documents">📄</a>
+											{% endif %}
+										</div>
+									</td>
+								{% endif %}
 							</tr>
 						{% endfor %}
 					</tbody>
@@ -87,22 +116,22 @@
 
 	<script>
 		function filterClients() {
-const input = document.getElementById('clientSearch');
-const filter = input.value.toLowerCase();
-const table = document.getElementById('clientsTable');
-const rows = table.getElementsByTagName('tr');
+	const input = document.getElementById('clientSearch');
+	const filter = input.value.toLowerCase();
+	const table = document.getElementById('clientsTable');
+	const rows = table.getElementsByTagName('tr');
 
-for (let i = 1; i < rows.length; i++) {
-const nameCell = rows[i].getElementsByTagName('td')[0];
-const emailCell = rows[i].getElementsByTagName('td')[1];
-const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
-const emailText = emailCell ? emailCell.textContent.toLowerCase() : '';
+	for (let i = 1; i < rows.length; i++) {
+	const nameCell = rows[i].getElementsByTagName('td')[0];
+	const emailCell = rows[i].getElementsByTagName('td')[1];
+	const nameText = nameCell ? nameCell.textContent.toLowerCase() : '';
+	const emailText = emailCell ? emailCell.textContent.toLowerCase() : '';
 
-if (nameText.includes(filter) || emailText.includes(filter)) {
-rows[i].style.display = '';
-} else {
-rows[i].style.display = 'none';
-}
+	if (nameText.includes(filter) || emailText.includes(filter)) {
+	rows[i].style.display = '';
+	} else {
+	rows[i].style.display = 'none';
+	}
 }
 }
 	</script>
