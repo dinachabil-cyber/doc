@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Twig\Environment;
 
 /**
  * Service for handling password reset functionality
@@ -32,8 +33,9 @@ class PasswordResetService
         private readonly MailerInterface $mailer,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
-        private readonly string $appEmailFrom = 'noreply@docmanager.com',
-        private readonly string $appBaseUrl = 'http://localhost:8000'
+        private readonly Environment $twig,
+        private readonly string $appEmailFrom,
+        private readonly string $appBaseUrl
     ) {}
 
     /**
@@ -156,20 +158,42 @@ class PasswordResetService
      */
     private function sendResetEmail(User $user, string $token): void
     {
-        $resetUrl = $this->urlGenerator->generate('app_reset_password', [
-            'token' => $token
-        ], UrlGeneratorInterface::ABSOLUTE_URL);
+        $resetUrl = $this->appBaseUrl . '/reset-password/' . $token;
 
-        $fullResetUrl = $this->appBaseUrl . $resetUrl;
+        // In development, also log the reset URL for testing without email
+        if (strpos($this->appBaseUrl, 'localhost') !== false || strpos($this->appBaseUrl, 'docmanager.ddev') !== false) {
+            $this->logger->info('PASSWORD RESET URL (DEV MODE): ' . $resetUrl, [
+                'user_id' => $user->getId(),
+                'email' => $user->getEmail()
+            ]);
+        }
 
-        $email = (new Email())
-            ->from($this->appEmailFrom)
-            ->to($user->getEmail())
-            ->subject('Password Reset Request - DocManager')
-            ->html($this->getResetEmailHtml($user, $fullResetUrl))
-            ->text($this->getResetEmailText($user, $fullResetUrl));
+        try {
+            $htmlContent = $this->twig->render('emails/reset_password.html.twig', [
+                'user' => $user,
+                'resetUrl' => $resetUrl,
+                'expiryMinutes' => self::TOKEN_EXPIRY_MINUTES
+            ]);
 
-        $this->mailer->send($email);
+            $email = (new Email())
+                ->from($this->appEmailFrom)
+                ->to($user->getEmail())
+                ->subject('Password Reset Request - DocManager')
+                ->html($htmlContent);
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Password reset email sent', [
+                'user_id' => $user->getId(),
+                'email' => $user->getEmail()
+            ]);
+        } catch (\Exception $e) {
+            // Log the error but don't break the flow - in dev, mailer might not work
+            $this->logger->error('Failed to send password reset email', [
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

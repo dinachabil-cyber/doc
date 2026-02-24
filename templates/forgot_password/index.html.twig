@@ -10,16 +10,15 @@
         <p class="auth-subtitle">Enter your email and we'll send you a reset link</p>
     </div>
 
-    {% if successMessage %}
-        <div class="flash flash-success">
-            <span class="flash-icon">✓</span>
-            {{ successMessage }}
-        </div>
-        <div class="auth-footer">
-            <a href="{{ path('app_login') }}">Back to Sign In</a>
-        </div>
-    {% else %}
-        <form method="post">
+    {# Check for flash messages #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="flash flash-{{ label }}">✓ {{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <form method="post">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('forgot_password') }}">
             <div class="form-group">
                 <label class="form-label" for="inputEmail">Email address</label>
                 <input type="email" 
@@ -45,6 +44,5 @@
         <div class="auth-footer">
             Remember your password? <a href="{{ path('app_login') }}">Sign In</a>
         </div>
-    {% endif %}
 </div>
 {% endblock %}

@@ -10,6 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 class ForgotPasswordController extends AbstractController
 {
@@ -17,7 +18,8 @@ class ForgotPasswordController extends AbstractController
     public function request(
         Request $request,
         PasswordResetService $passwordResetService,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        CsrfTokenManagerInterface $csrfTokenManager
     ): Response {
         // Redirect logged-in users to profile
         if ($this->getUser()) {
@@ -26,9 +28,15 @@ class ForgotPasswordController extends AbstractController
 
         $email = $request->request->get('email', '');
         $errors = [];
-        $successMessage = null;
 
         if ($request->isMethod('POST')) {
+            // Validate CSRF token
+            $csrfToken = $request->request->get('_csrf_token');
+            if (!$csrfTokenManager->isTokenValid(new \Symfony\Component\Security\Csrf\CsrfToken('forgot_password', $csrfToken))) {
+                $this->addFlash('error', 'Invalid security token. Please try again.');
+                return $this->redirectToRoute('app_forgot_password');
+            }
+
             // Validate email
             $violations = $validator->validate($email, [
                 new NotBlank(['message' => 'Email is required.']),
@@ -43,18 +51,18 @@ class ForgotPasswordController extends AbstractController
                 // Process password reset request
                 $result = $passwordResetService->requestReset($email);
                 
-                // Always show success message to prevent email enumeration
-                $successMessage = $result['message'];
+                // Add flash message
+                $this->addFlash('success', $result['message']);
                 
-                // Clear email field
-                $email = '';
+                // Redirect to avoid Turbo Drive form submission error
+                // Turbo Drive requires form submissions to redirect
+                return $this->redirectToRoute('app_forgot_password', [], Response::HTTP_FOUND);
             }
         }
 
         return $this->render('forgot_password/index.html.twig', [
             'email' => $email,
-            'errors' => $errors,
-            'successMessage' => $successMessage
+            'errors' => $errors
         ]);
     }
 }
