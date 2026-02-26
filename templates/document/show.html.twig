@@ -13,8 +13,8 @@
 			<p class="page-subtitle">Document details</p>
 		</div>
 		<div class="page-actions">
-			{% if document.isPdf() or document.isImage() %}
-				<a href="{{ path('app_document_preview', {id: document.id}) }}" data-preview="{{ path('app_document_preview', {id: document.id}) }}" class="btn btn-info">👁️ Preview</a>
+			{% if document.fileName %}
+				<a href="{{ path('app_document_view', {id: document.id}) }}" class="btn btn-info">👁️ View</a>
 			{% endif %}
 			{% if is_granted('DOCUMENT_DOWNLOAD') %}
 				<a href="{{ path('app_document_download', {id: document.id}) }}" class="btn btn-success">⬇ Download</a>
@@ -25,31 +25,6 @@
 			<a href="{{ path('app_document_index') }}" class="btn btn-secondary">← Back</a>
 		</div>
 	</div>
-
-	{# Preview Section #}
-	{% if document.fileName %}
-		{% set isImage = document.mimeType starts with 'image/' %}
-		{% set isPdf = document.mimeType == 'application/pdf' %}
-
-		<div class="card">
-			<h2 class="card-title mb-2">👁️ Preview</h2>
-			<div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1.5rem; text-align: center; min-height: 250px; display: flex; align-items: center; justify-content: center;">
-				{% if isImage %}
-					<img src="{{ vich_uploader_asset(document, 'file') }}" alt="{{ document.title }}" style="max-width: 100%; max-height: 450px; border-radius: 8px;">
-				{% elseif isPdf %}
-					<iframe src="{{ vich_uploader_asset(document, 'file') }}" width="100%" height="500px" style="border: 1px solid var(--border-color); border-radius: 8px;"></iframe>
-				{% else %}
-					<div style="text-align: center;">
-						<div style="font-size: 4rem; margin-bottom: 1rem;">📄</div>
-						<p class="text-muted">{{ document.originalName ?? document.fileName }}</p>
-						<p class="text-muted" style="font-size: 0.8rem;">{{ document.mimeType }}
-							—
-							{{ document.size ? (document.size / 1024)|number_format(1) ~ ' KB' : '' }}</p>
-					</div>
-				{% endif %}
-			</div>
-		</div>
-	{% endif %}
 
 	{# Document Details #}
 	<div class="card">

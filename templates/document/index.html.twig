@@ -133,8 +133,8 @@
 								<td>
 									<div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
 										{# Preview button #}
-										{% if doc.isPdf() or doc.isImage() %}
-											<a href="{{ path('app_document_preview', {id: doc.id}) }}" data-preview="{{ path('app_document_preview', {id: doc.id}) }}" class="btn btn-sm btn-info" title="Preview">👁️</a>
+										{% if doc.fileName %}
+											<a href="{{ path('app_document_view', {id: doc.id}) }}" class="btn btn-sm btn-info" title="View">👁️</a>
 										{% endif %}
 										{# Download button #}
 										{% if is_granted('DOCUMENT_DOWNLOAD') %}

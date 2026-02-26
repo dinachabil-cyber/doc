@@ -203,26 +203,71 @@ final class DocumentController extends AbstractController
     }
 
     /**
-     * Preview document inline (PDF or Image).
+     * View document in separate page.
      */
-    #[Route('/{id}/preview', name: 'app_document_preview', methods: ['GET'])]
+    #[Route('/{id}/view', name: 'app_document_view', methods: ['GET'])]
     #[IsGranted(Permission::DOCUMENTS_VIEW_DETAILS)]
-    public function preview(Document $document, DownloadHandler $downloadHandler): Response
+    public function view(Document $document): Response
     {
-        // Check if document can be previewed
-        if (!$document->isPdf() && !$document->isImage()) {
-            $this->addFlash('error', 'This file type cannot be previewed.');
+        // Check if document has a file to view
+        if (!$document->getFileName()) {
+            $this->addFlash('error', 'This document has no file to view.');
             return $this->redirectToRoute('app_document_show', ['id' => $document->getId()]);
         }
 
-        // For PDFs and images, return inline response using Vich's download handler
-        return $downloadHandler->downloadObject(
+        $fileContent = null;
+        if (str_starts_with($document->getMimeType(), 'text/')) {
+            $uploadDir = $this->getParameter('kernel.project_dir') . '/var/uploads/documents';
+            $filePath = $uploadDir . '/' . $document->getFileName();
+            if (file_exists($filePath)) {
+                $fileContent = file_get_contents($filePath);
+            }
+        }
+
+        return $this->render('document/view.html.twig', [
+            'document' => $document,
+            'fileContent' => $fileContent,
+        ]);
+    }
+
+    /**
+     * Serve document file for viewing (inline).
+     */
+    #[Route('/{id}/serve', name: 'app_document_serve', methods: ['GET'])]
+    #[IsGranted(Permission::DOCUMENTS_VIEW_DETAILS)]
+    public function serve(Document $document, DownloadHandler $downloadHandler): Response
+    {
+        // Check if document has a file to serve
+        if (!$document->getFileName()) {
+            $this->addFlash('error', 'This document has no file to view.');
+            return $this->redirectToRoute('app_document_show', ['id' => $document->getId()]);
+        }
+
+        // Serve file inline
+        $response = $downloadHandler->downloadObject(
             $document,
             'file',
             null,
             null,
             false // inline (not attachment)
         );
+
+        // Ensure correct content type for PDFs
+        if ($document->isPdf()) {
+            $response->headers->set('Content-Type', 'application/pdf');
+        }
+
+        // Ensure correct content type for images
+        if ($document->isImage()) {
+            $response->headers->set('Content-Type', $document->getMimeType());
+        }
+
+        // Ensure correct content type for text files
+        if (str_starts_with($document->getMimeType(), 'text/')) {
+            $response->headers->set('Content-Type', $document->getMimeType() . '; charset=utf-8');
+        }
+
+        return $response;
     }
 
     /**

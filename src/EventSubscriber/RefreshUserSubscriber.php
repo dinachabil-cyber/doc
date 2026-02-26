@@ -28,6 +28,13 @@ class RefreshUserSubscriber implements EventSubscriberInterface
 
     public function onKernelRequest(RequestEvent $event): void
     {
+        $request = $event->getRequest();
+        
+        // Skip for API requests that might be stateless
+        if (str_starts_with($request->getPathInfo(), '/api')) {
+            return;
+        }
+        
         $token = $this->tokenStorage->getToken();
         
         if ($token === null) {
