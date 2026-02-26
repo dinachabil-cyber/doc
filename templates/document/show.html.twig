@@ -14,7 +14,7 @@
 		</div>
 		<div class="page-actions">
 			{% if document.isPdf() or document.isImage() %}
-				<a href="{{ path('app_document_preview', {id: document.id}) }}" target="_blank" class="btn btn-info">👁️ Preview</a>
+				<a href="{{ path('app_document_preview', {id: document.id}) }}" data-preview="{{ path('app_document_preview', {id: document.id}) }}" class="btn btn-info">👁️ Preview</a>
 			{% endif %}
 			{% if is_granted('DOCUMENT_DOWNLOAD') %}
 				<a href="{{ path('app_document_download', {id: document.id}) }}" class="btn btn-success">⬇ Download</a>

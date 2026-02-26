@@ -49,6 +49,17 @@ class UserAdminController extends AbstractController
         }
 
         $form = $this->createForm(AdminUserRolesType::class, $user);
+        
+        // Pre-populate unmapped permission fields with user's current permissions
+        $userPermissions = $user->getPermissions();
+        foreach (Permission::getGroups() as $groupName => $permissions) {
+            $fieldName = 'permissions_' . str_replace(' ', '_', $groupName);
+            // Get permissions that belong to this group
+            $groupPermissions = array_keys($permissions);
+            $selectedPermissions = array_values(array_intersect($userPermissions, $groupPermissions));
+            $form->get($fieldName)->setData($selectedPermissions);
+        }
+        
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -57,16 +68,14 @@ class UserAdminController extends AbstractController
                 $user->setRoles(array_merge($user->getRoles(), ['ROLE_USER']));
             }
 
-            // Handle permissions from unmapped form fields
+            // Handle permissions from unmapped form fields - use form object for cleaner access
             $allPermissions = [];
-            $formData = $request->request->get('admin_user_roles_type');
             
-            if ($formData) {
-                foreach (Permission::getGroups() as $groupName => $permissions) {
-                    $fieldName = 'permissions_' . str_replace(' ', '_', $groupName);
-                    if (isset($formData[$fieldName]) && is_array($formData[$fieldName])) {
-                        $allPermissions = array_merge($allPermissions, $formData[$fieldName]);
-                    }
+            foreach (Permission::getGroups() as $groupName => $permissions) {
+                $fieldName = 'permissions_' . str_replace(' ', '_', $groupName);
+                $fieldData = $form->get($fieldName)->getData();
+                if (!empty($fieldData) && is_array($fieldData)) {
+                    $allPermissions = array_merge($allPermissions, $fieldData);
                 }
             }
             

@@ -177,6 +177,133 @@
 			})();
 		</script>
 
+		{# ✅ Preview Modal #}
+		<div id="preview-modal" class="modal" style="display: none;">
+			<div class="modal-content">
+				<span class="close">&times;</span>
+				<div class="loading" id="loading">Loading preview...</div>
+				<div id="preview-content"></div>
+			</div>
+		</div>
+
+		<style>
+			.modal {
+				position: fixed;
+				z-index: 1000;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				overflow: auto;
+				background-color: rgba(0,0,0,0.5);
+			}
+
+			.modal-content {
+				background-color: var(--card-bg);
+				margin: 5% auto;
+				padding: 20px;
+				border: 1px solid var(--border-color);
+				border-radius: 8px;
+				width: 80%;
+				max-width: 1000px;
+				max-height: 80vh;
+				overflow: auto;
+			}
+
+			.close {
+				color: #aaa;
+				float: right;
+				font-size: 28px;
+				font-weight: bold;
+				cursor: pointer;
+			}
+
+			.close:hover,
+			.close:focus {
+				color: #000;
+				text-decoration: none;
+				cursor: pointer;
+			}
+
+			.loading {
+				text-align: center;
+				padding: 50px;
+				font-size: 18px;
+				color: var(--text-muted);
+			}
+
+			.file-icon {
+				margin-right: 5px;
+				font-size: 14px;
+			}
+		</style>
+
+		{# ✅ Preview Modal JS #}
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const modal = document.getElementById('preview-modal');
+				const closeBtn = document.querySelector('.close');
+				const loading = document.getElementById('loading');
+				const content = document.getElementById('preview-content');
+
+				if (modal) {
+					// Close modal when clicking close button
+					closeBtn.addEventListener('click', function() {
+						modal.style.display = 'none';
+						content.innerHTML = '';
+					});
+
+					// Close modal when clicking outside of it
+					window.addEventListener('click', function(event) {
+						if (event.target === modal) {
+							modal.style.display = 'none';
+							content.innerHTML = '';
+						}
+					});
+
+					// Close modal with Escape key
+					document.addEventListener('keydown', function(event) {
+						if (event.key === 'Escape') {
+							modal.style.display = 'none';
+							content.innerHTML = '';
+						}
+					});
+
+					// Handle preview button clicks with data-preview attribute
+					document.querySelectorAll('[data-preview]').forEach(btn => {
+						btn.addEventListener('click', function(e) {
+							e.preventDefault();
+							const url = this.getAttribute('data-preview');
+							
+							modal.style.display = 'block';
+							loading.style.display = 'block';
+							content.innerHTML = '';
+							
+							// Create iframe for preview
+							const iframe = document.createElement('iframe');
+							iframe.src = url;
+							iframe.style.width = '100%';
+							iframe.style.height = '70vh';
+							iframe.style.border = 'none';
+							iframe.style.display = 'none';
+							
+							iframe.onload = function() {
+								loading.style.display = 'none';
+								iframe.style.display = 'block';
+							};
+							
+							iframe.onerror = function() {
+								loading.style.display = 'none';
+								content.innerHTML = '<p class="text-muted text-center">Preview unavailable</p>';
+							};
+							
+							content.appendChild(iframe);
+						});
+					});
+				}
+			});
+		</script>
+
 		{# ✅ Sidebar user dropdown JS #}
 		<script>
 			(() => {

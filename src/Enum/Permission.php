@@ -221,12 +221,17 @@ final class Permission
     /**
      * Get default permissions for a role
      * Note: Admin gets all permissions automatically in the voter
+     * 
+     * DEFAULT BEHAVIOR: Users have FULL ACCESS by default (add clients, documents, etc.)
+     * Admin can restrict permissions by explicitly setting them.
      */
     public static function getDefaultsForRole(string $role): array
     {
         return match ($role) {
             'ROLE_ADMIN' => self::getAll(),
-            'ROLE_USER' => self::getReadOnlyPermissions(),
+            // Default: Users have full access (can add clients, documents, etc.)
+            // Admin can restrict this by explicitly setting permissions
+            'ROLE_USER' => self::getFullPermissions(),
             default => [],
         };
     }
