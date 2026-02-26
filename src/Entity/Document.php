@@ -3,12 +3,14 @@
 namespace App\Entity;
 
 use App\Repository\DocumentRepository;
+use ApiPlatform\Metadata\ApiResource;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: DocumentRepository::class)]
+#[ApiResource]
 #[Vich\Uploadable]
 class Document
 {

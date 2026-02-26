@@ -55,7 +55,18 @@
 								<td>
 									<a href="{{ path('app_document_show', {id: doc.id}) }}" style="font-weight: 600;">{{ doc.title }}</a>
 								</td>
-								<td class="text-muted" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ doc.originalName ?? doc.fileName ?? '—' }}</td>
+								<td class="text-muted" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+									{% set fileIcon %}
+										{% if doc.isPdf() %}
+											📄
+										{% elseif doc.isImage() %}
+											🖼️
+										{% else %}
+											📎
+										{% endif %}
+									{% endset %}
+									<span class="file-icon">{{ fileIcon }}</span> {{ doc.originalName ?? doc.fileName ?? '—' }}
+								</td>
 								<td>
 									<span class="badge badge-purple">{{ doc.mimeType ? doc.mimeType|split('/')|last : '—' }}</span>
 								</td>
@@ -70,6 +81,9 @@
 								<td class="text-muted">{{ doc.createdAt|date('d/m/Y H:i') }}</td>
 								<td>
 									<div style="display: flex; gap: 0.5rem;">
+										{% if doc.isPdf() or doc.isImage() %}
+											<a href="{{ path('app_document_preview', {id: doc.id}) }}" data-preview="{{ path('app_document_preview', {id: doc.id}) }}" class="btn btn-sm btn-info">👁️ Preview</a>
+										{% endif %}
 										{% if is_granted('DOCUMENT_DOWNLOAD') %}
 											<a href="{{ path('app_document_download', {id: doc.id}) }}" class="btn btn-sm btn-success">⬇</a>
 										{% endif %}

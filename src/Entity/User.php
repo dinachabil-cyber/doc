@@ -113,8 +113,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             return true;
         }
         
-        // Get permissions - ensure it's always an array
+        // Get stored permissions
         $permissions = $this->permissions ?? [];
+        
+        // If no explicit permissions are set, use default permissions
+        if (empty($permissions)) {
+            return in_array($permission, Permission::getDefaultsForRole('ROLE_USER'), true);
+        }
         
         return in_array($permission, $permissions, true);
     }
@@ -141,7 +146,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Get all permissions
+     * Get all permissions (stored in DB, or empty if using defaults)
      */
     public function getPermissions(): array
     {
