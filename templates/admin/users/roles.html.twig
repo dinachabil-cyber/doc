@@ -273,105 +273,125 @@
 	</style>
 
 	<script>
-		// Permission Sets from PHP
-		const permissionSets = {{ permission_sets|json_encode|raw }};
-		
-		// Current selected group
-		let currentGroup = null;
+		// Function to initialize all event listeners
+		function initializePermissionsUI() {
+			// Permission Sets from PHP
+			const permissionSets = {{ permission_sets|json_encode|raw }};
+			
+			// Current selected group
+			let currentGroup = null;
 
-		// Quick Permission Set Buttons
-		document.querySelectorAll('.permission-set-btn').forEach(btn => {
-			btn.addEventListener('click', () => {
-				const setKey = btn.dataset.set;
-				const setData = permissionSets[setKey];
-				
-				if (!setData) return;
-				
-				// Update button states
-				document.querySelectorAll('.permission-set-btn').forEach(b => b.classList.remove('active'));
-				btn.classList.add('active');
-				
-				// Get all permission checkboxes
-				const checkboxes = document.querySelectorAll('.permission-checkbox');
-				
-				// Deselect all first
-				checkboxes.forEach(cb => cb.checked = false);
-				
-				// Select permissions from the set
-				setData.permissions.forEach(perm => {
+			// Quick Permission Set Buttons
+			document.querySelectorAll('.permission-set-btn').forEach(btn => {
+				// Remove existing listeners to prevent duplicates
+				btn.replaceWith(btn.cloneNode(true));
+			});
+			
+			// Re-select and add new listeners
+			document.querySelectorAll('.permission-set-btn').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const setKey = btn.dataset.set;
+					const setData = permissionSets[setKey];
+					
+					if (!setData) return;
+					
+					// Update button states
+					document.querySelectorAll('.permission-set-btn').forEach(b => b.classList.remove('active'));
+					btn.classList.add('active');
+					
+					// Get all permission checkboxes
+					const checkboxes = document.querySelectorAll('.permission-checkbox');
+					
+					// Deselect all first
+					checkboxes.forEach(cb => cb.checked = false);
+					
+					// Select permissions from the set
+					setData.permissions.forEach(perm => {
+						checkboxes.forEach(cb => {
+							if (cb.value === perm) {
+								cb.checked = true;
+								// Trigger change event for visual update
+								cb.dispatchEvent(new Event('change'));
+							}
+						});
+					});
+				});
+			});
+
+			// Select All / Deselect All buttons
+			document.querySelectorAll('.select-all-group').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const action = btn.dataset.action;
+					const checkboxes = document.querySelectorAll('.permission-checkbox');
 					checkboxes.forEach(cb => {
-						if (cb.value === perm) {
-							cb.checked = true;
-							// Trigger change event for visual update
-							cb.dispatchEvent(new Event('change'));
-						}
+						cb.checked = (action === 'select');
+						cb.dispatchEvent(new Event('change'));
 					});
 				});
 			});
-		});
 
-		// Select All / Deselect All buttons
-		document.querySelectorAll('.select-all-group').forEach(btn => {
-			btn.addEventListener('click', () => {
-				const action = btn.dataset.action;
-				const checkboxes = document.querySelectorAll('.permission-checkbox');
-				checkboxes.forEach(cb => {
-					cb.checked = (action === 'select');
-					cb.dispatchEvent(new Event('change'));
-				});
-			});
-		});
-
-		// Group-specific Select / Clear buttons
-		document.querySelectorAll('.select-group').forEach(btn => {
-			btn.addEventListener('click', () => {
-				const group = btn.dataset.group;
-				const checkboxes = document.querySelectorAll(`.permission-checkbox[data-group="${group}"]`);
-				checkboxes.forEach(cb => {
-					cb.checked = true;
-					cb.dispatchEvent(new Event('change'));
-				});
-			});
-		});
-
-		document.querySelectorAll('.deselect-group').forEach(btn => {
-			btn.addEventListener('click', () => {
-				const group = btn.dataset.group;
-				const checkboxes = document.querySelectorAll(`.permission-checkbox[data-group="${group}"]`);
-				checkboxes.forEach(cb => {
-					cb.checked = false;
-					cb.dispatchEvent(new Event('change'));
-				});
-			});
-		});
-
-		// Role checkbox handler - disable permissions for admin
-		document.querySelectorAll('.role-checkbox').forEach(cb => {
-			cb.addEventListener('change', () => {
-				const isAdmin = cb.checked && cb.dataset.role === 'ROLE_ADMIN';
-				const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
-				
-				if (isAdmin) {
-					// Disable all permission checkboxes for admin
-					permissionCheckboxes.forEach(pcb => {
-						pcb.disabled = true;
-						pcb.checked = true;
+			// Group-specific Select / Clear buttons
+			document.querySelectorAll('.select-group').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const group = btn.dataset.group;
+					const checkboxes = document.querySelectorAll(`.permission-checkbox[data-group="${group}"]`);
+					checkboxes.forEach(cb => {
+						cb.checked = true;
+						cb.dispatchEvent(new Event('change'));
 					});
-				} else {
-					// Re-enable permission checkboxes
-					permissionCheckboxes.forEach(pcb => {
-						pcb.disabled = false;
-					});
-				}
+				});
 			});
-		});
 
-		// Initialize: Check if user is admin
-		const adminCheckbox = document.querySelector('.role-checkbox[data-role="ROLE_ADMIN"]');
-		if (adminCheckbox && adminCheckbox.checked) {
-			document.querySelectorAll('.permission-checkbox').forEach(pcb => {
-				pcb.disabled = true;
+			document.querySelectorAll('.deselect-group').forEach(btn => {
+				btn.addEventListener('click', () => {
+					const group = btn.dataset.group;
+					const checkboxes = document.querySelectorAll(`.permission-checkbox[data-group="${group}"]`);
+					checkboxes.forEach(cb => {
+						cb.checked = false;
+						cb.dispatchEvent(new Event('change'));
+					});
+				});
 			});
+
+			// Role checkbox handler - disable permissions for admin
+			document.querySelectorAll('.role-checkbox').forEach(cb => {
+				cb.addEventListener('change', () => {
+					const isAdmin = cb.checked && cb.dataset.role === 'ROLE_ADMIN';
+					const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
+					
+					if (isAdmin) {
+						// Disable all permission checkboxes for admin
+						permissionCheckboxes.forEach(pcb => {
+							pcb.disabled = true;
+							pcb.checked = true;
+						});
+					} else {
+						// Re-enable permission checkboxes
+						permissionCheckboxes.forEach(pcb => {
+							pcb.disabled = false;
+						});
+					}
+				});
+			});
+
+			// Initialize: Check if user is admin
+			const adminCheckbox = document.querySelector('.role-checkbox[data-role="ROLE_ADMIN"]');
+			if (adminCheckbox && adminCheckbox.checked) {
+				document.querySelectorAll('.permission-checkbox').forEach(pcb => {
+					pcb.disabled = true;
+				});
+			}
 		}
+
+		// Initialize on DOM ready
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', initializePermissionsUI);
+		} else {
+			initializePermissionsUI();
+		}
+
+		// Also initialize on Turbo load events
+		document.addEventListener('turbo:load', initializePermissionsUI);
+		document.addEventListener('turbo:render', initializePermissionsUI);
 	</script>
 {% endblock %}
